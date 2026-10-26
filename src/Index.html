@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,600;0,800;1,900&display=swap" rel="stylesheet">
+  <style>
+    body[data-tema="negro-verde"] {
+      --fondo: #0B0B0D; --fondo2: #050506; --panel: #151518; --panel2: #1D1D21;
+      --oscuro: #09090B; --linea: rgba(255,255,255,.10); --texto: #F4F5F4; --sec: #9BA39E;
+      --acento: #3DDC84; --acentoTxt: #042413; --acentoFuerte: #3DDC84;
+      --acentoSuave: rgba(61,220,132,.12); --acentoBorde: rgba(61,220,132,.45); --peligro: #E0604F;
+      --sombra: 0 2px 10px rgba(0,0,0,.45); --ph: rgba(155,163,158,.5);
+      --barra: rgba(5,5,6,.93);
+    }
+    body[data-tema="negro-celeste"] {
+      --fondo: #0B0B0D; --fondo2: #050506; --panel: #151518; --panel2: #1D1D21;
+      --oscuro: #09090B; --linea: rgba(255,255,255,.10); --texto: #F3F5F6; --sec: #98A6B0;
+      --acento: #4CC3F2; --acentoTxt: #06222E; --acentoFuerte: #4CC3F2;
+      --acentoSuave: rgba(76,195,242,.12); --acentoBorde: rgba(76,195,242,.45); --peligro: #E0604F;
+      --sombra: 0 2px 10px rgba(0,0,0,.45); --ph: rgba(152,166,176,.5);
+      --barra: rgba(5,5,6,.93);
+    }
+    body[data-tema="negro-naranja"] {
+      --fondo: #0B0B0D; --fondo2: #050506; --panel: #151518; --panel2: #1D1D21;
+      --oscuro: #09090B; --linea: rgba(255,255,255,.10); --texto: #F5F4F2; --sec: #A9A29A;
+      --acento: #FF8A3D; --acentoTxt: #2B1200; --acentoFuerte: #FF8A3D;
+      --acentoSuave: rgba(255,138,61,.12); --acentoBorde: rgba(255,138,61,.45); --peligro: #E0604F;
+      --sombra: 0 2px 10px rgba(0,0,0,.45); --ph: rgba(169,162,154,.5);
+      --barra: rgba(5,5,6,.93);
+    }
+
+    body {
+      background: linear-gradient(180deg, var(--fondo) 0%, var(--fondo2) 100%);
+      min-height: 100vh; color: var(--texto);
+      font-family: 'Archivo', system-ui, sans-serif;
+      padding-bottom: 190px;
+    }
+    .marca { font-weight: 900; font-style: italic; letter-spacing: -0.5px; }
+    .pelota { width: 14px; height: 14px; border-radius: 50%; background: var(--acento);
+      display: inline-block; box-shadow: 0 0 0 4px var(--acentoSuave); }
+    .text-sec { color: var(--sec) !important; }
+    .text-acento { color: var(--acentoFuerte) !important; }
+    .cab { border-bottom: 2px solid var(--linea); }
+
+    .btn-tema { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--linea);
+      background: var(--panel); color: var(--sec); }
+    .btn-tema:hover { color: var(--acentoFuerte); border-color: var(--acentoBorde); }
+
+    .card-ej { background: var(--panel); border: 1px solid var(--linea); border-radius: 14px;
+      box-shadow: var(--sombra); transition: border-color .15s; color: var(--texto); }
+    .card-ej.listo { border-color: var(--acento); }
+
+    .btn-acento { background: var(--acento); color: var(--acentoTxt); font-weight: 800;
+      border: none; border-radius: 10px; }
+    .btn-acento:hover, .btn-acento:focus { background: var(--acento); color: var(--acentoTxt);
+      filter: brightness(1.07); }
+    .btn-acento:disabled { background: var(--acento); opacity: .4; color: var(--acentoTxt); }
+
+    .badge-meta { background: var(--acentoSuave); color: var(--acentoFuerte);
+      border: 1px solid var(--acentoBorde); font-weight: 800; font-size: .82rem;
+      border-radius: 999px; padding: .38em .75em; }
+    .badge-num { background: var(--acento); color: var(--acentoTxt); font-weight: 900;
+      border-radius: 10px; width: 34px; height: 34px; display: inline-flex;
+      align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+
+    .dia-card { background: var(--panel); border: 1px solid var(--linea); border-radius: 14px;
+      color: var(--texto); text-align: left; width: 100%; padding: 1rem;
+      display: flex; align-items: center; gap: .9rem; box-shadow: var(--sombra); transition: background .15s; }
+    .dia-card:hover { background: var(--panel2); }
+
+    .set-row .form-control { background: var(--oscuro); border: 1px solid var(--linea);
+      color: var(--texto); border-radius: 8px; }
+    .set-row .form-control::placeholder { color: var(--ph); }
+    .set-row .form-control:focus { border-color: var(--acento); background: var(--oscuro);
+      color: var(--texto); box-shadow: 0 0 0 .2rem var(--acentoSuave); }
+    .set-row .form-control.heredado { color: var(--sec); }
+    .snum { width: 30px; font-weight: 800; font-size: .85rem; color: var(--sec); }
+
+    .btn-chk { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--linea);
+      background: transparent; color: var(--sec); flex-shrink: 0; }
+    .btn-chk.on { background: var(--acento); border-color: var(--acento); color: var(--acentoTxt); }
+    .btn-chk.parcial { background: transparent; border-color: var(--acento); color: var(--acentoFuerte); }
+    .btn-chk i { font-size: 1.2rem; }
+    .snum.previa-parcial { color: var(--acentoFuerte); }
+    .leyenda { font-size: .73rem; color: var(--sec); display: flex; align-items: center;
+      gap: .9rem; flex-wrap: wrap; margin: 0 0 .9rem; }
+    .leyenda span { display: inline-flex; align-items: center; gap: .3rem; }
+    .leyenda .ico { width: 17px; height: 17px; border-radius: 50%; display: inline-flex;
+      align-items: center; justify-content: center; font-size: .6rem; flex-shrink: 0; }
+    .leyenda .i0 { border: 1.5px solid var(--linea); }
+    .leyenda .i1 { border: 1.5px solid var(--acento); color: var(--acentoFuerte); }
+    .leyenda .i2 { background: var(--acento); color: var(--acentoTxt); }
+
+    .btn-tecnica { border: 1.5px solid var(--acentoBorde); color: var(--acentoFuerte);
+      font-weight: 700; border-radius: 999px; font-size: .8rem; white-space: nowrap; }
+    .btn-tecnica:hover { background: var(--acento); color: var(--acentoTxt); border-color: var(--acento); }
+    .foto { width: 64px; height: 64px; object-fit: cover; border-radius: 10px;
+      border: 1px solid var(--linea); }
+
+    .btn-addset { border: 1.5px dashed var(--linea); color: var(--sec); border-radius: 10px;
+      font-size: .85rem; width: 100%; background: transparent; }
+    .btn-addset:hover { color: var(--texto); border-color: var(--sec); }
+    .btn-volver { color: var(--sec) !important; }
+
+    .barra-fija { background: var(--barra); backdrop-filter: blur(6px);
+      border-top: 2px solid var(--linea); }
+    .conteo-num { color: var(--texto); }
+    .desc-wrap { display: inline-flex; align-items: center; gap: .3rem; vertical-align: middle;
+      background: var(--oscuro); border: 1px solid var(--linea); border-radius: 999px;
+      padding: .15rem .3rem .15rem .6rem; font-size: .78rem; color: var(--sec); }
+    .desc-wrap .bi-hourglass-split { font-size: .8rem; }
+    .desc-input { width: 26px; background: transparent; border: none; color: var(--texto);
+      font-size: .82rem; font-weight: 700; text-align: center; padding: 0; }
+    .desc-input:focus { outline: none; color: var(--acentoFuerte); }
+    .desc-sep { font-weight: 700; color: var(--sec); margin: 0 -.15rem; }
+    .desc-input::-webkit-outer-spin-button, .desc-input::-webkit-inner-spin-button {
+      -webkit-appearance: none; margin: 0; }
+    .btn-timer { border: none; background: var(--acentoSuave); color: var(--acentoFuerte);
+      border-radius: 999px; min-width: 30px; height: 26px; font-size: .75rem; font-weight: 800;
+      display: inline-flex; align-items: center; justify-content: center; padding: 0 .45rem; }
+    .btn-timer.corriendo { background: var(--acento); color: var(--acentoTxt); }
+    .btn-timer i { font-size: .95rem; }
+
+    .btn-swap { border: 1px solid var(--linea); background: transparent; color: var(--sec);
+      border-radius: 999px; width: 26px; height: 26px; padding: 0; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; }
+    .btn-swap:hover { color: var(--acentoFuerte); border-color: var(--acentoBorde); }
+    .btn-swap.activo { color: var(--acentoTxt); background: var(--acento); border-color: var(--acento); }
+    .marca-alt { font-size: .68rem; font-weight: 800; color: var(--acentoFuerte);
+      background: var(--acentoSuave); border-radius: 4px; padding: .1rem .3rem;
+      text-transform: uppercase; letter-spacing: .04em; }
+    .chip-tiempo { display: inline-flex; align-items: center; gap: .3rem; font-size: .8rem;
+      font-weight: 700; color: var(--sec); background: var(--panel); border: 1px solid var(--linea);
+      border-radius: 999px; padding: .25rem .6rem; cursor: pointer; }
+    .chip-tiempo i { font-size: .85rem; }
+
+    .btn-quitarset { flex: 0 0 auto; width: auto; padding-left: .9rem; padding-right: .9rem; }
+    .btn-nota .punto { display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--acentoFuerte); vertical-align: middle; margin-left: .15rem; }
+    .btn-nota.escrita { background: var(--acento); color: var(--acentoTxt); border-color: var(--acento); }
+    .nota-previa { font-size: .76rem; color: var(--sec); font-style: italic; margin: 0 0 .45rem; }
+    .nota-txt { background: var(--panel) !important; border: 1px solid var(--linea) !important;
+      color: var(--texto) !important; font-size: .82rem; border-radius: 8px; }
+    .nota-txt::placeholder { color: var(--ph); }
+    .nota-txt:focus { border-color: var(--acento) !important; box-shadow: 0 0 0 .2rem var(--acentoSuave) !important; }
+
+    .aviso-brr { font-size: .76rem; color: var(--acentoFuerte); background: var(--acentoSuave);
+      border: 1px solid var(--acentoBorde); border-radius: 8px; padding: .45rem .7rem;
+      margin: 0 0 .9rem; }
+    .aviso-brr a { color: var(--acentoFuerte); text-decoration: underline; }
+
+    .diag { font-size: .74rem; color: var(--sec); line-height: 1.6; margin-top: 1.1rem;
+      border-top: 1px solid var(--linea); padding-top: .7rem; }
+    .diag b { color: var(--texto); font-weight: 700; }
+    .diag .ok { color: var(--acentoFuerte); }
+    .diag .no { color: var(--peligro); }
+
+    .panel-tec { background: var(--oscuro); border: 1px solid var(--linea); border-radius: 10px;
+      padding: .65rem .8rem; margin-top: .7rem; }
+    .panel-tec ul { margin: 0; padding-left: 1.05rem; }
+    .panel-tec li { font-size: .79rem; line-height: 1.45; color: var(--texto);
+      margin-bottom: .3rem; }
+    .panel-tec li::marker { color: var(--acentoFuerte); }
+    .panel-tec .foto { width: 100%; height: auto; max-height: 220px; margin-top: .5rem; }
+    .panel-tec .link-video { display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .79rem; font-weight: 700; color: var(--acentoFuerte); text-decoration: none;
+      margin-top: .45rem; margin-right: .9rem; }
+
+    .chip-subir { font-size: .76rem; font-weight: 700; color: var(--acentoTxt); background: var(--acento);
+      border-radius: 8px; padding: .3rem .55rem; display: inline-block; line-height: 1.35; }
+
+    .hist-fila { display: flex; gap: .6rem; align-items: baseline; padding: .32rem 0;
+      border-bottom: 1px solid var(--linea); }
+    .hist-fecha { font-size: .74rem; font-weight: 800; color: var(--sec); min-width: 3.4rem; flex-shrink: 0; }
+    .hist-sets { display: flex; flex-wrap: wrap; gap: .3rem; }
+    .hist-set { font-size: .78rem; font-weight: 700; background: var(--panel2); border-radius: 6px;
+      padding: .05rem .4rem; font-variant-numeric: tabular-nums; }
+    .hist-set.parcial { box-shadow: inset 0 0 0 1.5px var(--acento); background: transparent; }
+    .hist-nota { font-size: .72rem; color: var(--sec); font-style: italic; margin: .15rem 0 .2rem 4rem; }
+    .hist-ley { font-size: .68rem; color: var(--sec); margin: .45rem 0 0; }
+
+    .tira-desc { background: var(--panel2); border: 1px solid var(--linea); border-radius: 12px;
+      padding: .45rem .55rem .45rem .75rem; margin-bottom: .5rem; }
+    .tira-tit { font-size: .74rem; font-weight: 700; color: var(--sec); white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; }
+    .tira-prog { height: 4px; background: var(--oscuro); border-radius: 999px; overflow: hidden;
+      margin-top: .35rem; }
+    .tira-prog span { display: block; height: 100%; width: 0; background: var(--acento);
+      transition: width .25s linear; }
+    .tira-num { font-weight: 900; font-size: 1.35rem; font-variant-numeric: tabular-nums;
+      min-width: 3.3rem; text-align: right; line-height: 1; }
+    .btn-tira { border: 1px solid var(--linea); background: transparent; color: var(--texto);
+      border-radius: 999px; height: 34px; min-width: 40px; font-size: .78rem; font-weight: 800;
+      padding: 0 .5rem; display: inline-flex; align-items: center; justify-content: center; }
+    .tira-desc.listo { background: var(--acento); border-color: var(--acento);
+      animation: latido 1s ease-in-out 5; }
+    .tira-desc.listo .tira-tit { color: var(--acentoTxt); font-size: .9rem; font-weight: 800;
+      white-space: normal; line-height: 1.25; }
+    .tira-desc.listo .tira-prog, .tira-desc.listo .tira-num { display: none; }
+    .tira-desc.listo .btn-tira { color: var(--acentoTxt); border-color: rgba(0,0,0,.3); }
+    @keyframes latido { 50% { filter: brightness(1.3); } }
+
+    #toast-app { position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+      background: var(--acento); color: var(--acentoTxt); font-weight: 800; font-size: .9rem;
+      padding: .6rem 1.2rem; border-radius: 999px; box-shadow: 0 6px 18px rgba(0,0,0,.35);
+      opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 1050; max-width: 92%;
+      text-align: center; }
+    #toast-app.ver { opacity: 1; }
+  </style>
+</head>
+<body data-tema="negro-verde">
+  <div class="container" style="max-width: 560px;">
+    <header class="cab d-flex align-items-end justify-content-between pt-4 pb-3 mb-3">
+      <div>
+        <h1 class="marca h2 mb-0">Set y serie</h1>
+        <p class="text-sec small mb-0 mt-1">Fuerza para la cancha</p>
+      </div>
+      <div class="d-flex align-items-center gap-3 mb-1">
+        <button class="btn-tema" id="btnSonido" onclick="alternarSonido()"
+          title="Sonido al terminar el descanso" aria-label="Sonido al terminar el descanso">
+          <i class="bi bi-volume-up"></i>
+        </button>
+        <button class="btn-tema" id="btnAuto" onclick="alternarAuto()"
+          title="Iniciar el descanso al marcar una serie"
+          aria-label="Iniciar el descanso al marcar una serie">
+          <i class="bi bi-stopwatch"></i>
+        </button>
+        <button class="btn-tema" onclick="cicloTema()" title="Cambiar colores" aria-label="Cambiar colores">
+          <i class="bi bi-palette"></i>
+        </button>
+      </div>
+    </header>
+    <div id="vista" class="text-sec text-center py-5">
+      <div class="spinner-border spinner-border-sm me-2" role="status"></div>Cargando tu rutina…
+    </div>
+  </div>
+
+  <div id="barra" class="fixed-bottom barra-fija d-none">
+    <div class="container py-2" style="max-width: 560px;">
+      <div id="tiraDescanso" class="tira-desc d-none" role="status" aria-live="polite">
+        <div class="d-flex align-items-center gap-2">
+          <div class="flex-grow-1" style="min-width: 0;">
+            <div class="tira-tit" id="tdNombre">Descanso</div>
+            <div class="tira-prog"><span id="tdBarra"></span></div>
+          </div>
+          <span class="tira-num" id="tdTiempo">0:00</span>
+          <span id="tdControles" class="d-inline-flex gap-1">
+            <button class="btn-tira" onclick="ajustarDescanso(-15)" aria-label="15 segundos menos">−15</button>
+            <button class="btn-tira" onclick="ajustarDescanso(15)" aria-label="15 segundos más">+15</button>
+            <button class="btn-tira" onclick="detenerTimer()" aria-label="Detener el descanso">
+              <i class="bi bi-x-lg"></i></button>
+          </span>
+          <button class="btn-tira d-none" id="tdOk" onclick="ocultarFin()" aria-label="Cerrar aviso">OK</button>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span id="chipTiempo" class="chip-tiempo d-none" onclick="reiniciarCronometro()"
+          title="Duración de la sesión (toca para reiniciar)">
+          <i class="bi bi-stopwatch"></i><span id="txtTiempo">0:00</span>
+        </span>
+        <p class="mb-0 text-sec small flex-grow-1">
+          <span id="nListas" class="fw-bold conteo-num fs-6">0</span> series
+        </p>
+        <button id="btnGuardar" class="btn btn-acento px-4 py-2" onclick="guardar()" disabled>
+          <i class="bi bi-check2-circle me-1"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="audioDescanso" preload="auto" playsinline></audio>
+
+  <div id="toast-app"></div>
+
+  <script>
+    // ——— Temas de color ———
+    const TEMAS = [
+      { id: 'negro-verde', nombre: 'Negro y verde', bs: 'dark' },
+      { id: 'negro-celeste', nombre: 'Negro y celeste', bs: 'dark' },
+      { id: 'negro-naranja', nombre: 'Negro y naranja', bs: 'dark' }
+    ];
+    let temaActual = 'negro-verde';
+    try {
+      const g = localStorage.getItem('setyserie-tema');
+      if (g && TEMAS.some(function (t) { return t.id === g; })) temaActual = g;
+    } catch (e) {}
+    aplicarTema(temaActual, false);
+
+    function aplicarTema(id, avisarCambio) {
+      const t = TEMAS.find(function (x) { return x.id === id; }) || TEMAS[0];
+      temaActual = t.id;
+      document.body.setAttribute('data-tema', t.id);
+      document.documentElement.setAttribute('data-bs-theme', t.bs);
+      try { localStorage.setItem('setyserie-tema', t.id); } catch (e) {}
+      if (avisarCambio) toast('Colores: ' + t.nombre);
+    }
+
+    function cicloTema() {
+      const i = TEMAS.findIndex(function (t) { return t.id === temaActual; });
+      aplicarTema(TEMAS[(i + 1) % TEMAS.length].id, true);
+    }
+
+    // ——— Estado ———
+    let RUTINA = null;
+    let diaActivo = null;
+    let marcas = {};
+
+    google.script.run
+      .withSuccessHandler(iniciar)
+      .withFailureHandler(function (e) { fallo(e); })
+      .obtenerRutina();
+
+    function iniciar(r) {
+      if (r && r.error) {
+        document.getElementById('vista').innerHTML = '<div class="alert alert-warning">' + esc(r.error) + '</div>';
+        return;
+      }
+      RUTINA = r;
+      pintarAjustes();
+      renderInicio();
+    }
+
+    function esc(t) {
+      return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function esUrl(t) {
+      return /^https?:\/\//i.test(String(t || '').trim());
+    }
+
+    let toastTimer = null;
+    function toast(m, ms) {
+      const t = document.getElementById('toast-app');
+      t.textContent = m;
+      t.classList.add('ver');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { t.classList.remove('ver'); }, ms || 2600);
+    }
+
+    function fallo(e) {
+      toast('Error: ' + (e && e.message ? e.message : 'no se pudo conectar'));
+      const b = document.getElementById('btnGuardar');
+      b.disabled = false;
+      b.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Guardar';
+    }
+
+    // ——— Inicio: elegir día ———
+    function renderInicio() {
+      detenerTimer();
+      ocultarFin();
+      cerrarCronometro(false);
+      diaActivo = null;
+      document.getElementById('barra').classList.add('d-none');
+      let html = '<p class="text-sec small mb-3">Elige el día que vas a entrenar. Para editar ejercicios, modifica la pestaña «Rutina» de la hoja.</p>' +
+        '<div class="d-flex flex-column gap-2">';
+      RUTINA.orden.forEach(function (d, i) {
+        html += '<button class="dia-card" onclick="elegirDia(' + i + ')">' +
+          '<span class="badge-num">' + (i + 1) + '</span>' +
+          '<span class="flex-grow-1"><span class="fw-bold fs-6 d-block">' + esc(d) + '</span>' +
+          '<span class="text-sec" style="font-size:.8rem">' + RUTINA.dias[d].length +
+          (RUTINA.dias[d].length === 1 ? ' ejercicio' : ' ejercicios') + '</span></span>' +
+          '<i class="bi bi-chevron-right text-sec"></i></button>';
+      });
+      html += '</div>' +
+        '<p class="text-sec mt-4" style="font-size:.78rem; line-height:1.5;">' +
+        '<i class="bi bi-graph-up-arrow me-1 text-acento"></i>' +
+        'Regla de progresión: cuando completes el tope de repeticiones en todas las series de un ' +
+        'ejercicio, sube 2,5–5 kg la próxima vez. Termina cada serie con 1–3 repeticiones en reserva.</p>' +
+        '<div class="diag" id="diag"></div>';
+      document.getElementById('vista').innerHTML = html;
+      pintarDiagnostico();
+      document.getElementById('vista').classList.remove('text-center', 'py-5');
+    }
+
+    function elegirDia(i) {
+      diaActivo = RUTINA.orden[i];
+      document.getElementById('vista').innerHTML =
+        '<div class="text-sec text-center py-5"><div class="spinner-border spinner-border-sm me-2"></div>Cargando tus últimas marcas…</div>';
+      google.script.run
+        .withSuccessHandler(function (m) { marcas = m || {}; renderDia(); })
+        .withFailureHandler(function () { marcas = {}; renderDia(); })
+        .obtenerUltimasMarcas(diaActivo);
+    }
+
+    // ——— Día de entrenamiento ———
+    function filaSet(e, n, ph) {
+      const vPeso = ph && ph.peso ? ' value="' + esc(ph.peso) + '"' : '';
+      const vReps = ph && ph.reps ? ' value="' + esc(ph.reps) + '"' : '';
+      const cPeso = ph && ph.peso ? ' heredado' : '';
+      const cReps = ph && ph.reps ? ' heredado' : '';
+      const fueParcial = !!(ph && ph.estado === 'interrumpida');
+      const claseS = fueParcial ? 'snum previa-parcial' : 'snum';
+      const tituloS = fueParcial ? ' title="La última vez interrumpiste esta serie"' : '';
+      return '<div class="set-row d-flex align-items-center gap-2">' +
+        '<span class="' + claseS + '"' + tituloS + '>S' + n + '</span>' +
+        '<input class="form-control form-control-sm peso' + cPeso + '" style="width:86px" type="number" step="0.5" inputmode="decimal" placeholder="kg"' + vPeso + ' oninput="this.classList.remove(\'heredado\'); guardarBorrador()" id="p-' + e + '-' + n + '">' +
+        '<span class="text-sec" style="font-size:.75rem">kg ×</span>' +
+        '<input class="form-control form-control-sm reps' + cReps + '" style="width:74px" inputmode="numeric" placeholder="reps"' + vReps + ' oninput="this.classList.remove(\'heredado\'); guardarBorrador()" id="r-' + e + '-' + n + '">' +
+        '<button class="btn-chk ms-auto" id="c-' + e + '-' + n + '" onclick="marcar(this)" ' +
+        'data-estado="0" aria-label="Marcar serie ' + n + '" title="Toca: hecha → interrumpida → sin hacer">' +
+        '<i class="bi bi-check-lg"></i></button></div>';
+    }
+
+    function controlDescanso(e, segs) {
+      const s = Math.max(0, Math.round(Number(segs) || 0));
+      const mm = Math.floor(s / 60);
+      const ss = ('0' + (s % 60)).slice(-2);
+      return '<span class="desc-wrap">' +
+        '<i class="bi bi-hourglass-split" aria-hidden="true"></i>' +
+        '<input class="desc-input desc-min" id="dm-' + e + '" type="text" inputmode="numeric" ' +
+        'maxlength="2" value="' + mm + '" onblur="normalizarDescanso(' + e + ')" ' +
+        'aria-label="Minutos de descanso">' +
+        '<span class="desc-sep">:</span>' +
+        '<input class="desc-input desc-seg" id="ds-' + e + '" type="text" inputmode="numeric" ' +
+        'maxlength="2" value="' + ss + '" onblur="normalizarDescanso(' + e + ')" ' +
+        'aria-label="Segundos de descanso">' +
+        '<button class="btn-timer" id="t-' + e + '" onclick="alternarTimer(' + e + ')" ' +
+        'aria-label="Iniciar temporizador de descanso"><i class="bi bi-play-fill"></i></button>' +
+        '</span>';
+    }
+
+    /** Lee el descanso de un ejercicio en segundos. */
+    function descansoSegundos(e) {
+      const cm = document.getElementById('dm-' + e);
+      const cs = document.getElementById('ds-' + e);
+      const mm = cm ? (parseInt(cm.value, 10) || 0) : 0;
+      const ss = cs ? (parseInt(cs.value, 10) || 0) : 0;
+      return Math.max(0, mm * 60 + ss);
+    }
+
+    /** Acomoda lo escrito: 2:90 pasa a 3:30, y los segundos siempre con dos dígitos. */
+    function normalizarDescanso(e) {
+      const total = descansoSegundos(e);
+      const cm = document.getElementById('dm-' + e);
+      const cs = document.getElementById('ds-' + e);
+      if (cm) cm.value = Math.floor(total / 60);
+      if (cs) cs.value = ('0' + (total % 60)).slice(-2);
+      guardarBorrador();
+    }
+
+    // ——— Ajustes del aviso ———
+    let sonidoOn = true;
+    let autoDescanso = true;   // el descanso parte solo al marcar una serie
+    try {
+      if (localStorage.getItem('setyserie-sonido') === '0') sonidoOn = false;
+      if (localStorage.getItem('setyserie-auto') === '0') autoDescanso = false;
+    } catch (err) {}
+
+    function pintarDiagnostico() {
+      const c = document.getElementById('diag');
+      if (!c) return;
+      let sonido = 'sin probar aún (toca el parlante)';
+      if (!sonidoOn) sonido = '<span class="no">apagado</span>';
+      else if (avisoAudioOk === true) sonido = '<span class="ok">funciona</span>';
+      else if (avisoAudioOk === false) sonido = '<span class="no">el navegador lo bloqueó: toca el parlante</span>';
+      c.innerHTML =
+        '<b>Aviso de fin de descanso</b><br>' +
+        'Sonido: ' + sonido + '<br>' +
+        'Descanso: ' + (autoDescanso
+          ? '<span class="ok">parte solo al marcar una serie</span>'
+          : 'manual, con ▶ en cada ejercicio') + '<br>' +
+        '<span style="display:inline-block;margin-top:.4rem">Suena aunque bloquees la pantalla: dos pitidos ' +
+        'cortos cuando faltan 10 s y la alarma al terminar. Sube el volumen multimedia (no el del timbre). ' +
+        'Si escuchas música en el mismo teléfono, Android puede pausarla mientras corre el descanso.</span>';
+    }
+
+    function pintarAjustes() {
+      const bs = document.getElementById('btnSonido');
+      const ba = document.getElementById('btnAuto');
+      if (bs) {
+        bs.innerHTML = '<i class="bi ' + (sonidoOn ? 'bi-volume-up' : 'bi-volume-mute') + '"></i>';
+        bs.style.color = sonidoOn ? 'var(--acentoFuerte)' : 'var(--sec)';
+      }
+      if (ba) {
+        ba.innerHTML = '<i class="bi ' + (autoDescanso ? 'bi-stopwatch-fill' : 'bi-stopwatch') + '"></i>';
+        ba.style.color = autoDescanso ? 'var(--acentoFuerte)' : 'var(--sec)';
+      }
+    }
+
+    function alternarSonido() {
+      sonidoOn = !sonidoOn;
+      try { localStorage.setItem('setyserie-sonido', sonidoOn ? '1' : '0'); } catch (err) {}
+      pintarAjustes();
+      pintarDiagnostico();
+      if (sonidoOn) {
+        if (timer.e !== null) programarAviso(Math.max(1, Math.round((timer.fin - Date.now()) / 1000)), timer.seq);
+        else pitidoPrueba();
+        toast('Sonido activado');
+      } else { cancelarAviso(); toast('Aviso sonoro desactivado'); }
+    }
+
+    function alternarAuto() {
+      autoDescanso = !autoDescanso;
+      try { localStorage.setItem('setyserie-auto', autoDescanso ? '1' : '0'); } catch (err) {}
+      pintarAjustes();
+      pintarDiagnostico();
+      toast(autoDescanso ? 'El descanso parte solo al marcar una serie' : 'Descanso manual: usa ▶ en cada ejercicio', 3200);
+    }
+
+    // Audio: se reproduce UN archivo que dura todo el descanso (casi silencio y
+    // los pitidos al final). Es reproducción multimedia normal, así que el sistema la
+    // mantiene andando con la pantalla bloqueada, sin depender de que el JS siga vivo.
+    // Al terminar la cuenta NO se pausa: el final del archivo es la alarma.
+    let avisoAudioOk = null;   // null = sin probar, true/false = resultado real
+    const cacheWav = {};
+    const SR_WAV = 11025;
+    const COLA_WAV = 3.4;      // segundos de alarma al final del archivo
+
+    function audioEl() { return document.getElementById('audioDescanso'); }
+
+    /**
+     * WAV de 8 bits: casi-silencio durante el descanso, dos pitidos cortos cuando
+     * faltan 10 s y, al llegar a cero, tres ráfagas agudas (~3 s) que se oyen en el gimnasio.
+     */
+    function construirWav(segs) {
+      const sr = SR_WAV;
+      const total = Math.ceil((segs + COLA_WAV) * sr);
+      const buf = new Uint8Array(44 + total);
+      const dv = new DataView(buf.buffer);
+      const txt = function (pos, t) {
+        for (let i = 0; i < t.length; i++) buf[pos + i] = t.charCodeAt(i);
+      };
+      txt(0, 'RIFF'); dv.setUint32(4, 36 + total, true); txt(8, 'WAVE');
+      txt(12, 'fmt '); dv.setUint32(16, 16, true);
+      dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+      dv.setUint32(24, sr, true); dv.setUint32(28, sr, true);
+      dv.setUint16(32, 1, true); dv.setUint16(34, 8, true);
+      txt(36, 'data'); dv.setUint32(40, total, true);
+
+      // Casi-silencio con un dither mínimo (inaudible): evita que el sistema
+      // considere la pista vacía y suelte el foco de audio.
+      for (let i = 0; i < total; i++) {
+        buf[44 + i] = (i % 200 < 100) ? 128 : 129;
+      }
+
+      const tono = function (desde, dur, hz, vol) {
+        const ini = 44 + Math.floor(desde * sr);
+        const largo = Math.floor(dur * sr);
+        const rampa = sr * 0.006;
+        for (let i = 0; i < largo; i++) {
+          const idx = ini + i;
+          if (idx < 44) continue;
+          if (idx >= buf.length) break;
+          // Rampa de entrada y salida para que no suene un clic
+          const fade = Math.min(1, i / rampa, (largo - i) / rampa);
+          const v = Math.sin(2 * Math.PI * hz * (i / sr)) * vol * fade;
+          buf[idx] = Math.max(0, Math.min(255, Math.round(128 + v * 127)));
+        }
+      };
+
+      // Pre-aviso: faltan 10 s
+      if (segs >= 20) {
+        tono(segs - 10, 0.09, 1320, 0.55);
+        tono(segs - 10 + 0.18, 0.09, 1320, 0.55);
+      }
+      // Alarma: 3 ráfagas de bip-bip-biiip en la zona donde el oído es más sensible
+      for (let g = 0; g < 3; g++) {
+        const t0 = segs + g * 1.15;
+        tono(t0, 0.12, 1760, 0.95);
+        tono(t0 + 0.18, 0.12, 1760, 0.95);
+        tono(t0 + 0.36, 0.34, 2349, 0.95);
+      }
+      return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+    }
+
+    function urlWav(segs) {
+      const k = String(Math.max(0, Math.round(segs)));
+      if (!cacheWav[k]) {
+        // Se guardan pocos: un descanso de 3 min pesa ~2 MB
+        const a = audioEl();
+        Object.keys(cacheWav).forEach(function (c) {
+          if (Object.keys(cacheWav).length >= 4 && c !== '0' && (!a || a.src !== cacheWav[c])) {
+            URL.revokeObjectURL(cacheWav[c]);
+            delete cacheWav[c];
+          }
+        });
+        cacheWav[k] = construirWav(Number(k));
+      }
+      return cacheWav[k];
+    }
+
+    function horaCorta(ms) {
+      const d = new Date(ms);
+      return d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2);
+    }
+
+    function marcarSesionMultimedia() {
+      try {
+        if ('mediaSession' in navigator && window.MediaMetadata) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: 'Descanso' + (timer.nombre ? ' · ' + timer.nombre : ''),
+            artist: timer.fin ? 'Termina a las ' + horaCorta(timer.fin) : 'Set y serie',
+            album: 'Set y serie'
+          });
+          navigator.mediaSession.playbackState = 'playing';
+        }
+      } catch (err) {}
+    }
+
+    function programarAviso(segs, seq) {
+      cancelarAviso();
+      if (!sonidoOn) return;
+      const a = audioEl();
+      if (!a) { avisoAudioOk = false; return; }
+      try {
+        a.src = urlWav(segs);
+        a.currentTime = 0;
+        a.volume = 1;
+        const pr = a.play();
+        if (pr && pr.then) {
+          pr.then(function () {
+            avisoAudioOk = true;
+            // El audio arranca con algo de retraso: la cuenta se alinea con él
+            if (timer.e !== null && timer.seq === seq) {
+              const nuevoFin = Date.now() + Math.max(0, segs - (a.currentTime || 0)) * 1000;
+              timer.inicio += nuevoFin - timer.fin;
+              timer.fin = nuevoFin;
+            }
+            marcarSesionMultimedia();
+            pintarDiagnostico();
+          }).catch(function () {
+            avisoAudioOk = false;
+            pintarDiagnostico();
+          });
+        } else {
+          avisoAudioOk = true;
+        }
+      } catch (err) { avisoAudioOk = false; }
+    }
+
+    function cancelarAviso() {
+      const a = audioEl();
+      if (!a) return;
+      try {
+        a.pause();
+        a.currentTime = 0;
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+      } catch (err) {}
+    }
+
+    /** Solo la alarma (3 s), por el mismo camino que el aviso real. */
+    function pitidoPrueba() {
+      const a = audioEl();
+      if (!a) return;
+      try {
+        a.src = urlWav(0);
+        a.currentTime = 0;
+        a.play().then(function () { avisoAudioOk = true; pintarDiagnostico(); })
+                .catch(function () { avisoAudioOk = false; pintarDiagnostico(); });
+      } catch (err) { avisoAudioOk = false; }
+    }
+
+    (function () {
+      const a = audioEl();
+      if (a) a.addEventListener('ended', function () {
+        try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none'; } catch (err) {}
+      });
+    })();
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        escribirBorrador();          // por si el navegador descarta la pestaña
+      } else if (timer.e !== null) {
+        pintarTimer();
+      }
+    });
+    window.addEventListener('pagehide', escribirBorrador);
+
+    // ——— Temporizador de descanso (uno a la vez) ———
+    // timer.n es la serie que lo inició al marcarla (0 = iniciado con ▶).
+    let timer = { e: null, n: 0, inicio: 0, fin: 0, tick: null, nombre: '', seq: 0 };
+    let seqTimer = 0;
+    let finMostrado = null;
+
+    function timerVacio() {
+      return { e: null, n: 0, inicio: 0, fin: 0, tick: null, nombre: '', seq: 0 };
+    }
+
+    function botonTimerIdle(e) {
+      const b = document.getElementById('t-' + e);
+      if (b) {
+        b.classList.remove('corriendo');
+        b.innerHTML = '<i class="bi bi-play-fill"></i>';
+      }
+    }
+
+    function iniciarDescanso(e, n) {
+      const segs = descansoSegundos(e);
+      if (segs <= 0) { toast('Indica un descanso mayor a 0'); return; }
+      detenerTimer();
+      ocultarFin();
+      const v = variante(e);
+      const ahora = Date.now();
+      timer = {
+        e: e, n: n || 0, inicio: ahora, fin: ahora + segs * 1000,
+        tick: setInterval(pintarTimer, 250), nombre: v ? v.nombre : '', seq: ++seqTimer
+      };
+      programarAviso(segs, timer.seq);
+      pintarTimer();
+    }
+
+    function alternarTimer(e) {
+      if (timer.e === e) { detenerTimer(); return; }
+      iniciarDescanso(e, 0);
+    }
+
+    /** Cancelación: corta el audio. */
+    function detenerTimer() {
+      if (timer.tick) clearInterval(timer.tick);
+      if (timer.e !== null) botonTimerIdle(timer.e);
+      const habia = timer.e !== null;
+      timer = timerVacio();
+      if (habia) cancelarAviso();
+      const t = document.getElementById('tiraDescanso');
+      if (t && !t.classList.contains('listo')) t.classList.add('d-none');
+    }
+
+    /** Fin natural: el audio sigue sonando, porque la alarma es el final del archivo. */
+    function terminarDescanso() {
+      const e = timer.e;
+      if (timer.tick) clearInterval(timer.tick);
+      timer = timerVacio();
+      if (e !== null) botonTimerIdle(e);
+      const a = audioEl();
+      const sonara = a && a.src && (a.ended || !a.paused);
+      // Si el sistema pausó el audio (otra app tomó el sonido), suena una alarma corta
+      if (sonidoOn && !sonara && !document.hidden) pitidoPrueba();
+      if (!document.hidden && navigator.vibrate) {
+        try { navigator.vibrate([300, 120, 300, 120, 300]); } catch (err) {}
+      }
+      mostrarFin();
+    }
+
+    function ajustarDescanso(d) {
+      if (timer.e === null) return;
+      const resta = Math.max(5, Math.round((timer.fin - Date.now()) / 1000) + d);
+      timer.fin = Date.now() + resta * 1000;
+      if (timer.fin < timer.inicio) timer.inicio = Date.now();
+      timer.seq = ++seqTimer;
+      programarAviso(resta, timer.seq);
+      pintarTimer();
+    }
+
+    function pintarTimer() {
+      if (timer.e === null) return;
+      const resta = timer.fin - Date.now();
+      if (resta <= 0) { terminarDescanso(); return; }
+      const s = Math.ceil(resta / 1000);
+      const txt = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+      const b = document.getElementById('t-' + timer.e);
+      if (b) {
+        b.classList.add('corriendo');
+        b.textContent = txt;
+      }
+      const t = document.getElementById('tiraDescanso');
+      if (!t) return;
+      t.classList.remove('d-none', 'listo');
+      document.getElementById('tdNombre').textContent = 'Descanso' + (timer.nombre ? ' · ' + timer.nombre : '');
+      document.getElementById('tdTiempo').textContent = txt;
+      const total = Math.max(1, timer.fin - timer.inicio);
+      document.getElementById('tdBarra').style.width =
+        Math.min(100, Math.max(0, 100 * (1 - resta / total))) + '%';
+      document.getElementById('tdControles').classList.remove('d-none');
+      document.getElementById('tdOk').classList.add('d-none');
+    }
+
+    function mostrarFin() {
+      const t = document.getElementById('tiraDescanso');
+      if (!t || !diaActivo) return;
+      t.classList.remove('d-none');
+      t.classList.add('listo');
+      document.getElementById('tdNombre').textContent = '¡Descanso terminado! A la siguiente serie';
+      document.getElementById('tdControles').classList.add('d-none');
+      document.getElementById('tdOk').classList.remove('d-none');
+      if (finMostrado) clearTimeout(finMostrado);
+      finMostrado = setTimeout(ocultarFin, 90000);
+    }
+
+    function ocultarFin() {
+      if (finMostrado) { clearTimeout(finMostrado); finMostrado = null; }
+      const t = document.getElementById('tiraDescanso');
+      if (!t) return;
+      t.classList.remove('listo');
+      document.getElementById('tdOk').classList.add('d-none');
+      if (timer.e === null) t.classList.add('d-none');
+    }
+
+    // ——— Cronómetro de la sesión ———
+    // Parte al abrir el día. Si la primera serie se marca más de 15 min después
+    // (abriste la app antes de llegar), vuelve a partir en ese momento.
+    let inicioSesion = 0;
+    let tickSesion = null;
+    let tokenSesion = '';      // identifica la sesión al guardar: un reenvío no la duplica
+    let cronoAjustado = false;
+
+    function nuevoToken() {
+      return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    }
+
+    function persistirSesion() {
+      try {
+        localStorage.setItem('setyserie-sesion',
+          JSON.stringify({ dia: diaActivo, inicio: inicioSesion, token: tokenSesion }));
+      } catch (err) {}
+    }
+
+    function abrirCronometro(dia) {
+      let guardado = null;
+      try {
+        const raw = localStorage.getItem('setyserie-sesion');
+        if (raw) {
+          const o = JSON.parse(raw);
+          // Retoma la sesión si es del mismo día y comenzó hace menos de 6 horas
+          if (o && o.dia === dia && (Date.now() - o.inicio) < 6 * 3600 * 1000) guardado = o;
+        }
+      } catch (err) {}
+      inicioSesion = guardado ? guardado.inicio : Date.now();
+      tokenSesion = (guardado && guardado.token) || nuevoToken();
+      cronoAjustado = false;
+      persistirSesion();
+      document.getElementById('chipTiempo').classList.remove('d-none');
+      if (tickSesion) clearInterval(tickSesion);
+      tickSesion = setInterval(pintarCronometro, 1000);
+      pintarCronometro();
+    }
+
+    function cerrarCronometro(borrar) {
+      if (tickSesion) clearInterval(tickSesion);
+      tickSesion = null;
+      document.getElementById('chipTiempo').classList.add('d-none');
+      if (borrar) {
+        inicioSesion = 0;
+        tokenSesion = '';
+        try { localStorage.removeItem('setyserie-sesion'); } catch (err) {}
+      }
+    }
+
+    function pintarCronometro() {
+      if (!inicioSesion) return;
+      const s = Math.max(0, Math.floor((Date.now() - inicioSesion) / 1000));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const seg = ('0' + (s % 60)).slice(-2);
+      document.getElementById('txtTiempo').textContent =
+        h ? h + ':' + ('0' + m).slice(-2) + ':' + seg : m + ':' + seg;
+    }
+
+    function reiniciarCronometro() {
+      if (!confirm('¿Reiniciar el cronómetro de esta sesión desde ahora?')) return;
+      inicioSesion = Date.now();
+      cronoAjustado = true;
+      persistirSesion();
+      pintarCronometro();
+      toast('Cronómetro reiniciado');
+    }
+
+    function ajustarCronometroPrimeraSerie() {
+      if (cronoAjustado || !inicioSesion) return;
+      if (document.querySelectorAll('.btn-chk.on, .btn-chk.parcial').length !== 1) return;
+      cronoAjustado = true;
+      if (Date.now() - inicioSesion < 15 * 60 * 1000) return;
+      inicioSesion = Date.now();
+      persistirSesion();
+      pintarCronometro();
+      toast('El cronómetro parte ahora, con tu primera serie', 3500);
+    }
+
+    // ——— Ejercicios alternativos ———
+    // activos[e] es un índice: 0 = el ejercicio original, 1..n = su alternativa n-1.
+    let EJ_DIA = [];
+    let activos = [];
+
+    /** Variante activa de un ejercicio, con TODOS sus datos propios. */
+    function variante(e) {
+      const ej = EJ_DIA[e];
+      if (!ej) return null;
+      const i = activos[e] || 0;
+      if (i === 0) {
+        return {
+          nombre: ej.nombre, series: ej.series, reps: ej.reps, nota: ej.nota,
+          url: ej.url, descanso: ej.descanso, tips: ej.tips || [], esAlt: false
+        };
+      }
+      const a = (ej.alts || [])[i - 1];
+      if (!a) { activos[e] = 0; return variante(e); }
+      return {
+        nombre: a.nombre, series: a.series || ej.series, reps: a.reps || ej.reps,
+        nota: a.nota, url: a.url, descanso: a.descanso || ej.descanso,
+        tips: a.tips || [], esAlt: true
+      };
+    }
+
+    function cambiarEjercicio(e) {
+      const ej = EJ_DIA[e];
+      if (!ej || !ej.alts || !ej.alts.length) return;
+      activos[e] = ((activos[e] || 0) + 1) % (ej.alts.length + 1);
+      if (timer.e === e) detenerTimer();
+      const v = variante(e);
+      const card = document.getElementById('ej-' + e);
+      card.setAttribute('data-nombre', v.nombre);
+      card.classList.remove('listo');
+      card.innerHTML = cardEjercicio(e);
+      actualizarConteo();
+      guardarBorrador();
+      toast(v.nombre);
+    }
+
+    // ——— Observaciones de la sesión ———
+    function botonNota(e, previa) {
+      return '<button class="btn btn-sm btn-tecnica btn-nota" id="bn-' + e + '" ' +
+        'onclick="alternarNota(' + e + ')" aria-expanded="false">' +
+        '<i class="bi bi-pencil-square me-1"></i>Nota' +
+        (previa ? '<span class="punto"></span>' : '') + '</button>';
+    }
+
+    function panelNota(e, previa) {
+      return '<div class="panel-tec d-none" id="nota-' + e + '">' +
+        (previa ? '<p class="nota-previa">Última vez anotaste: ' + esc(previa) + '</p>' : '') +
+        '<textarea class="form-control nota-txt" id="nt-' + e + '" rows="2" ' +
+        'oninput="marcarNota(' + e + ')" ' +
+        'placeholder="Ej: 12 kg fue mucho, bajar a 10"></textarea></div>';
+    }
+
+    function alternarNota(e) {
+      const p = document.getElementById('nota-' + e);
+      const b = document.getElementById('bn-' + e);
+      if (!p) return;
+      const abierto = !p.classList.contains('d-none');
+      p.classList.toggle('d-none', abierto);
+      if (b) b.setAttribute('aria-expanded', String(!abierto));
+      if (!abierto) {
+        const t = document.getElementById('nt-' + e);
+        if (t) t.focus();
+      }
+    }
+
+    function marcarNota(e) {
+      const t = document.getElementById('nt-' + e);
+      const b = document.getElementById('bn-' + e);
+      if (t && b) b.classList.toggle('escrita', t.value.trim().length > 0);
+      guardarBorrador();
+    }
+
+    function esImagen(url) {
+      return /\.(jpe?g|png|gif|webp)(\?.*)?$/i.test(url);
+    }
+
+    /** Material de técnica de la variante: claves de texto y enlaces válidos (un enlace pegado en una clave se muestra como enlace). */
+    function materialTecnica(v) {
+      const tips = (v.tips || []).filter(function (t) { return !esUrl(t); });
+      const enlaces = (esUrl(v.url) ? [String(v.url).trim()] : [])
+        .concat((v.tips || []).filter(esUrl).map(function (t) { return String(t).trim(); }));
+      return { tips: tips, enlaces: enlaces };
+    }
+
+    /** Botón «Técnica»: aparece solo si la variante activa tiene claves o material. */
+    function botonTecnica(e, v) {
+      const m = materialTecnica(v);
+      if (!m.tips.length && !m.enlaces.length) return '';
+      return '<button class="btn btn-sm btn-tecnica" onclick="alternarTecnica(' + e + ')" ' +
+        'aria-expanded="false" id="bt-' + e + '">' +
+        '<i class="bi bi-lightbulb me-1"></i>Técnica</button>';
+    }
+
+    /** Panel plegado con las claves técnicas de la variante activa, su video y su foto. */
+    function panelTecnica(e, v) {
+      const m = materialTecnica(v);
+      if (!m.tips.length && !m.enlaces.length) return '';
+      let cuerpo = '';
+      if (m.tips.length) {
+        cuerpo += '<ul>' + m.tips.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
+      }
+      m.enlaces.forEach(function (url, i) {
+        cuerpo += esImagen(url)
+          ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">' +
+            '<img class="foto" src="' + esc(url) + '" alt="Técnica"></a>'
+          : '<a class="link-video" href="' + esc(url) + '" target="_blank" rel="noopener">' +
+            '<i class="bi bi-play-circle"></i>' + (i === 0 ? 'Ver video de la técnica' : 'Otro video') + '</a>';
+      });
+      return '<div class="panel-tec d-none" id="tec-' + e + '">' + cuerpo + '</div>';
+    }
+
+    function alternarTecnica(e) {
+      const p = document.getElementById('tec-' + e);
+      const b = document.getElementById('bt-' + e);
+      if (!p) return;
+      const abierto = !p.classList.contains('d-none');
+      p.classList.toggle('d-none', abierto);
+      if (b) b.setAttribute('aria-expanded', String(!abierto));
+    }
+
+    // ——— Historial por ejercicio ———
+    let cacheHist = {};
+    const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+    function botonHistorial(e) {
+      return '<button class="btn btn-sm btn-tecnica" id="bh-' + e + '" onclick="alternarHistorial(' + e + ')" ' +
+        'aria-expanded="false"><i class="bi bi-graph-up me-1"></i>Historial</button>';
+    }
+
+    function panelHistorial(e) {
+      return '<div class="panel-tec d-none" id="hist-' + e + '"></div>';
+    }
+
+    function fechaCorta(f) {
+      const m = String(f || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? Number(m[3]) + ' ' + MESES[Number(m[2]) - 1] : String(f || '');
+    }
+
+    function htmlHistorial(r) {
+      const ses = (r && r.sesiones) || [];
+      if (!ses.length) return '<p class="nota-previa mb-0">Todavía no hay sesiones de este ejercicio.</p>';
+      return ses.map(function (s) {
+        const sets = (s.sets || []).map(function (x) {
+          const p = x.peso !== '' && x.peso !== undefined ? String(x.peso).replace('.', ',') : '–';
+          const rr = x.reps !== '' && x.reps !== undefined ? x.reps : '–';
+          return '<span class="hist-set' + (x.estado === 'interrumpida' ? ' parcial' : '') + '">' +
+            esc(p) + '×' + esc(rr) + '</span>';
+        }).join('');
+        return '<div class="hist-fila"><span class="hist-fecha">' + esc(fechaCorta(s.fecha)) + '</span>' +
+          '<span class="hist-sets">' + sets + '</span></div>' +
+          (s.nota ? '<p class="hist-nota">' + esc(s.nota) + '</p>' : '');
+      }).join('') + '<p class="hist-ley">kg × reps · con borde: serie interrumpida</p>';
+    }
+
+    function alternarHistorial(e) {
+      const p = document.getElementById('hist-' + e);
+      const b = document.getElementById('bh-' + e);
+      if (!p) return;
+      const abierto = !p.classList.contains('d-none');
+      p.classList.toggle('d-none', abierto);
+      if (b) b.setAttribute('aria-expanded', String(!abierto));
+      if (abierto) return;
+      const nombre = variante(e).nombre;
+      if (cacheHist[nombre]) { p.innerHTML = htmlHistorial(cacheHist[nombre]); return; }
+      p.innerHTML = '<p class="nota-previa mb-0"><span class="spinner-border spinner-border-sm me-2"></span>Buscando tus sesiones…</p>';
+      google.script.run
+        .withSuccessHandler(function (r) {
+          cacheHist[nombre] = r;
+          const q = document.getElementById('hist-' + e);
+          if (q && variante(e) && variante(e).nombre === nombre) q.innerHTML = htmlHistorial(r);
+        })
+        .withFailureHandler(function () {
+          const q = document.getElementById('hist-' + e);
+          if (q) q.innerHTML = '<p class="nota-previa mb-0">No se pudo cargar el historial. Revisa la conexión.</p>';
+        })
+        .obtenerHistorial(nombre, 6);
+    }
+
+    // ——— Progresión ———
+    /** "8-12" → {min: 8, max: 12}; "10" → {min: 10, max: 10}. */
+    function rangoReps(t) {
+      const n = String(t || '').match(/\d+/g);
+      if (!n) return null;
+      return { min: Number(n[0]), max: Number(n[n.length > 1 ? 1 : 0]) };
+    }
+
+    /**
+     * La última vez llegó al tope del rango en todas las series, con peso y sin pausas.
+     * No aplica a potencia (saltos, lanzamientos) ni a objetivos en segundos.
+     */
+    function tocaSubir(m, v) {
+      if (!m || !m.sets || m.sets.length < v.series) return false;
+      if (/\d\s*(s|seg)\b/i.test(String(v.reps))) return false;
+      if (/potencia|explosiv|salto|lanzamiento/i.test(v.nombre + ' ' + (v.nota || ''))) return false;
+      const r = rangoReps(v.reps);
+      if (!r) return false;
+      return m.sets.every(function (s) {
+        return Number(s.peso) > 0 && Number(s.reps) >= r.max && s.estado !== 'interrumpida';
+      });
+    }
+
+    function cardEjercicio(e) {
+      const ej = EJ_DIA[e];
+      const v = variante(e);
+      const m = marcas[v.nombre];
+      const nSets = Math.max(v.series, m && m.sets ? m.sets.length : 0);
+      const desc = (m && m.descanso > 0) ? m.descanso : v.descanso;
+
+      let ult = '';
+      if (m && m.sets && m.sets.length) {
+        const parciales = m.sets.filter(function (x) { return x.estado === 'interrumpida'; }).length;
+        ult = '<p class="text-acento mb-0 mt-2" style="font-size:.78rem">' +
+          '<i class="bi bi-clock-history me-1"></i>Precargado de tu sesión del ' + esc(m.fecha) +
+          (m.otroDia ? ' (' + esc(m.dia) + ')' : '') +
+          (parciales ? ' · ' + parciales + (parciales === 1 ? ' serie con pausa' : ' series con pausa') : '') +
+          '</p>';
+        if (tocaSubir(m, v)) {
+          ult += '<p class="chip-subir mb-0 mt-2"><i class="bi bi-arrow-up-circle-fill me-1"></i>' +
+            'Llegaste al tope (' + rangoReps(v.reps).max + ' reps) en todas las series: sube 2,5–5 kg</p>';
+        }
+      }
+      let sets = '';
+      for (let n = 1; n <= nSets; n++) {
+        const ph = m && m.sets ? m.sets[n - 1] : null;
+        sets += filaSet(e, n, ph);
+      }
+      const nAlts = (ej.alts || []).length;
+      const swap = nAlts
+        ? '<button class="btn-swap' + (v.esAlt ? ' activo' : '') + '" onclick="cambiarEjercicio(' + e + ')" ' +
+          'title="Cambiar por una alternativa (' + nAlts + ' disponibles)" ' +
+          'aria-label="Cambiar por una alternativa"><i class="bi bi-arrow-repeat"></i></button>'
+        : '';
+
+      return '<div class="d-flex align-items-start gap-2">' +
+        '<div class="flex-grow-1">' +
+        '<div class="d-flex align-items-start gap-2 mb-1">' +
+        '<p class="fw-bold mb-0" style="line-height:1.3">' + esc(v.nombre) +
+        (v.esAlt ? ' <span class="marca-alt">alt</span>' : '') + '</p>' + swap + '</div>' +
+        '<div class="d-flex align-items-center gap-2 flex-wrap">' +
+        '<span class="badge-meta">' + v.series + ' × ' + esc(v.reps) + '</span>' +
+        controlDescanso(e, desc) +
+        botonTecnica(e, v) +
+        botonNota(e, m && m.nota ? m.nota : '') +
+        botonHistorial(e) + '</div>' +
+        (v.nota ? '<p class="text-sec mb-0 mt-2" style="font-size:.78rem">' + esc(v.nota) + '</p>' : '') +
+        ult + '</div></div>' +
+        panelTecnica(e, v) +
+        panelNota(e, m && m.nota ? m.nota : '') +
+        panelHistorial(e) +
+        '<div class="d-flex flex-column gap-2 mt-3" id="sets-' + e + '">' + sets + '</div>' +
+        '<div class="d-flex gap-2 mt-2">' +
+        '<button class="btn btn-sm btn-addset" onclick="agregarSerie(' + e + ')">' +
+        '<i class="bi bi-plus-lg me-1"></i>añadir serie</button>' +
+        '<button class="btn btn-sm btn-addset btn-quitarset" onclick="quitarSerie(' + e + ')" ' +
+        'title="Quitar la última serie" aria-label="Quitar la última serie">' +
+        '<i class="bi bi-dash-lg"></i></button></div>';
+    }
+
+    // ——— Borrador de la sesión en curso ———
+    // Lo que anotas se guarda en el teléfono tras cada cambio. Si la app se
+    // recarga, el navegador descarta la pestaña o se corta la conexión, al volver
+    // al mismo día se recupera todo tal como estaba.
+    const K_BORRADOR = 'setyserie-borrador';
+    const HORAS_BORRADOR = 12;
+    let pendienteBorrador = null;
+
+    function leerBorradores() {
+      try {
+        const raw = localStorage.getItem(K_BORRADOR);
+        const o = raw ? JSON.parse(raw) : {};
+        return (o && typeof o === 'object') ? o : {};
+      } catch (err) { return {}; }
+    }
+
+    function guardarBorrador() {
+      if (!diaActivo) return;
+      if (pendienteBorrador) clearTimeout(pendienteBorrador);
+      pendienteBorrador = setTimeout(escribirBorrador, 700);
+    }
+
+    function escribirBorrador() {
+      pendienteBorrador = null;
+      if (!diaActivo) return;
+      try {
+        const ejercicios = [];
+        document.querySelectorAll('.card-ej').forEach(function (card) {
+          const e = Number(card.id.replace('ej-', ''));
+          const sets = [];
+          card.querySelectorAll('.set-row').forEach(function (fila) {
+            sets.push({
+              p: fila.querySelector('.peso').value,
+              r: fila.querySelector('.reps').value,
+              s: fila.querySelector('.btn-chk').getAttribute('data-estado') || '0'
+            });
+          });
+          const nota = card.querySelector('.nota-txt');
+          ejercicios.push({
+            e: e, alt: activos[e] || 0, sets: sets,
+            nota: nota ? nota.value : '', desc: descansoSegundos(e)
+          });
+        });
+        const todos = leerBorradores();
+        todos[diaActivo] = {
+          ts: Date.now(), inicio: inicioSesion, token: tokenSesion, ejercicios: ejercicios
+        };
+        localStorage.setItem(K_BORRADOR, JSON.stringify(todos));
+      } catch (err) { /* el borrador es una ayuda, nunca bloquea la sesión */ }
+    }
+
+    function borrarBorrador(dia) {
+      try {
+        const todos = leerBorradores();
+        delete todos[dia];
+        localStorage.setItem(K_BORRADOR, JSON.stringify(todos));
+      } catch (err) {}
+    }
+
+    /** Borrador vigente del día, o null si no hay o ya caducó. */
+    function borradorDe(dia) {
+      const b = leerBorradores()[dia];
+      if (!b || !b.ejercicios) return null;
+      if ((Date.now() - (b.ts || 0)) > HORAS_BORRADOR * 3600 * 1000) return null;
+      const algo = b.ejercicios.some(function (x) {
+        return (x.nota && x.nota.trim()) || (x.alt || 0) !== 0 ||
+          (x.sets || []).some(function (st) {
+            return (st.s && st.s !== '0') || (st.p || '').trim() || (st.r || '').trim();
+          });
+      });
+      return algo ? b : null;
+    }
+
+    /** Vuelca el borrador sobre las tarjetas ya dibujadas. */
+    function aplicarBorrador(b) {
+      (b.ejercicios || []).forEach(function (x) {
+        const e = x.e;
+        const card = document.getElementById('ej-' + e);
+        if (!card) return;
+
+        // Ajustar el número de series a lo que había anotado
+        const cont = document.getElementById('sets-' + e);
+        let filas = cont.querySelectorAll('.set-row');
+        const quiero = (x.sets || []).length;
+        while (filas.length < quiero) {
+          cont.insertAdjacentHTML('beforeend', filaSet(e, filas.length + 1, null));
+          filas = cont.querySelectorAll('.set-row');
+        }
+        while (filas.length > quiero && filas.length > 1) {
+          filas[filas.length - 1].remove();
+          filas = cont.querySelectorAll('.set-row');
+        }
+        // Valores y estados
+        (x.sets || []).forEach(function (st, i) {
+          const fila = filas[i];
+          if (!fila) return;
+          const ip = fila.querySelector('.peso');
+          const ir = fila.querySelector('.reps');
+          if (st.p !== undefined) { ip.value = st.p; if (st.p) ip.classList.remove('heredado'); }
+          if (st.r !== undefined) { ir.value = st.r; if (st.r) ir.classList.remove('heredado'); }
+          pintarChk(fila.querySelector('.btn-chk'), Number(st.s || 0) || 0);
+        });
+        // Nota y descanso
+        const nt = card.querySelector('.nota-txt');
+        if (nt && x.nota) {
+          nt.value = x.nota;
+          const bn = document.getElementById('bn-' + e);
+          if (bn) bn.classList.add('escrita');
+        }
+        if (x.desc > 0) {
+          const cm = document.getElementById('dm-' + e);
+          const cs = document.getElementById('ds-' + e);
+          if (cm) cm.value = Math.floor(x.desc / 60);
+          if (cs) cs.value = ('0' + (x.desc % 60)).slice(-2);
+        }
+        refrescarEstadoTarjeta(e);
+      });
+      actualizarConteo();
+    }
+
+    function descartarBorrador() {
+      if (!confirm('¿Descartar lo anotado y empezar este día de cero?')) return;
+      borrarBorrador(diaActivo);
+      renderDia();
+      toast('Empezaste de cero');
+    }
+
+    function renderDia() {
+      const lista = RUTINA.dias[diaActivo];
+      EJ_DIA = lista;
+      activos = lista.map(function () { return 0; });
+
+      // Si había una sesión a medio anotar en este día, se recupera
+      const brr = borradorDe(diaActivo);
+      if (brr) {
+        (brr.ejercicios || []).forEach(function (x) {
+          if (x.e !== undefined && x.alt) activos[x.e] = x.alt;
+        });
+      }
+
+      let html = '<button class="btn btn-link btn-volver text-decoration-none ps-0 mb-1" onclick="renderInicio()">' +
+        '<i class="bi bi-chevron-left"></i> Días</button>' +
+        '<h2 class="marca h4 mb-1">' + esc(diaActivo) + '</h2>' +
+        '<p class="text-sec small mb-2">Los valores precargados son los de tu última sesión: ajústalos si cambias, o solo marca la serie si repites.</p>' +
+        '<p class="leyenda">' +
+        '<span><i class="ico i0"></i>sin hacer</span>' +
+        '<span><i class="ico i2"><i class="bi bi-check-lg"></i></i>hecha</span>' +
+        '<span><i class="ico i1"><i class="bi bi-pause-fill"></i></i>hecha, con pausa</span>' +
+        '</p>' +
+        (brr ? '<p class="aviso-brr"><i class="bi bi-arrow-counterclockwise me-1"></i>' +
+          'Recuperado de las ' + horaDe(brr.ts) + ' · ' +
+          '<a href="javascript:void(0)" onclick="descartarBorrador()">empezar de cero</a></p>' : '') +
+        '<div class="d-flex flex-column gap-3">';
+
+      lista.forEach(function (ej, e) {
+        html += '<div class="card-ej p-3" id="ej-' + e + '" data-nombre="' +
+          esc(variante(e).nombre) + '">' + cardEjercicio(e) + '</div>';
+      });
+
+      html += '</div>';
+      document.getElementById('vista').innerHTML = html;
+      document.getElementById('vista').classList.remove('text-center', 'py-5');
+      document.getElementById('barra').classList.remove('d-none');
+      abrirCronometro(diaActivo);
+      if (brr) {
+        // El borrador conserva el token: si el guardado anterior sí llegó, no se duplica
+        if (brr.token) { tokenSesion = brr.token; persistirSesion(); }
+        aplicarBorrador(brr);
+      }
+      actualizarConteo();
+      window.scrollTo(0, 0);
+    }
+
+    function horaDe(ts) {
+      try {
+        const d = new Date(ts);
+        return d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2);
+      } catch (err) { return '—'; }
+    }
+
+    function agregarSerie(e) {
+      const cont = document.getElementById('sets-' + e);
+      const n = cont.querySelectorAll('.set-row').length + 1;
+      cont.insertAdjacentHTML('beforeend', filaSet(e, n, null));
+      refrescarEstadoTarjeta(e);
+      guardarBorrador();
+    }
+
+    function quitarSerie(e) {
+      const cont = document.getElementById('sets-' + e);
+      const filas = cont.querySelectorAll('.set-row');
+      if (filas.length <= 1) { toast('Debe quedar al menos una serie'); return; }
+      const ultima = filas[filas.length - 1];
+      const chk = ultima.querySelector('.btn-chk');
+      const conDatos = ultima.querySelector('.peso').value.trim() ||
+        ultima.querySelector('.reps').value.trim() ||
+        chk.getAttribute('data-estado') !== '0';
+      if (conDatos && !confirm('La última serie tiene datos. ¿Quitarla igual?')) return;
+      if (timer.e === e) detenerTimer();
+      ultima.remove();
+      refrescarEstadoTarjeta(e);
+      actualizarConteo();
+      guardarBorrador();
+    }
+
+    /** Recalcula si la tarjeta está completa tras añadir o quitar series. */
+    function refrescarEstadoTarjeta(e) {
+      const card = document.getElementById('ej-' + e);
+      if (!card) return;
+      const total = card.querySelectorAll('.btn-chk').length;
+      const hechas = card.querySelectorAll('.btn-chk.on, .btn-chk.parcial').length;
+      card.classList.toggle('listo', total > 0 && hechas === total);
+    }
+
+    // Estados de una serie: 0 sin hacer · 1 hecha · 2 hecha pero interrumpida
+    function pintarChk(btn, est) {
+      btn.setAttribute('data-estado', String(est));
+      btn.classList.toggle('on', est === 1);
+      btn.classList.toggle('parcial', est === 2);
+      btn.innerHTML = est === 2
+        ? '<i class="bi bi-pause-fill"></i>'
+        : '<i class="bi bi-check-lg"></i>';
+      btn.setAttribute('aria-label',
+        est === 1 ? 'Serie hecha' : (est === 2 ? 'Serie hecha pero interrumpida' : 'Serie sin hacer'));
+    }
+
+    function marcar(btn) {
+      const est = (Number(btn.getAttribute('data-estado')) + 1) % 3;
+      pintarChk(btn, est);
+      const partes = btn.id.split('-');          // c-<ejercicio>-<serie>
+      const e = Number(partes[1]);
+      const n = Number(partes[2]);
+      refrescarEstadoTarjeta(e);
+      actualizarConteo();
+      guardarBorrador();
+      if (est !== 0) ajustarCronometroPrimeraSerie();
+
+      if (est === 1) {
+        ocultarFin();
+        // Descanso automático, salvo que ya no quede ninguna serie por hacer
+        const quedan = document.querySelectorAll('.btn-chk[data-estado="0"]').length;
+        if (autoDescanso && quedan > 0) iniciarDescanso(e, n);
+      } else if (est === 0 && timer.e === e && timer.n === n) {
+        detenerTimer();                          // desmarcaste la serie que lo inició
+      }
+    }
+
+    function actualizarConteo() {
+      const n = document.querySelectorAll('.btn-chk.on, .btn-chk.parcial').length;
+      document.getElementById('nListas').textContent = n;
+      document.getElementById('btnGuardar').disabled = n === 0;
+    }
+
+    // ——— Guardar sesión: una fila por serie ———
+    function guardar() {
+      const filas = [];
+      document.querySelectorAll('.card-ej').forEach(function (card) {
+        const nombre = card.getAttribute('data-nombre');
+        const e = Number(card.id.replace('ej-', ''));
+        const idEj = (EJ_DIA[e] && EJ_DIA[e].id) || '';
+        const descanso = descansoSegundos(e) || '';
+        const campoNota = card.querySelector('.nota-txt');
+        const obs = campoNota ? campoNota.value.trim() : '';
+        card.querySelectorAll('.set-row').forEach(function (fila, idx) {
+          const peso = fila.querySelector('.peso').value.trim();
+          const reps = fila.querySelector('.reps').value.trim();
+          const est = fila.querySelector('.btn-chk').getAttribute('data-estado');
+          if (est !== '0') {
+            filas.push({
+              id: idEj, ejercicio: nombre, serie: idx + 1, peso: peso, reps: reps,
+              descanso: descanso, obs: obs,
+              estado: est === '2' ? 'interrumpida' : 'completa'
+            });
+          }
+        });
+      });
+      if (!filas.length) { toast('Marca al menos una serie'); return; }
+
+      // Guardar cierra la sesión: se confirma para que un toque sin querer no la corte a la mitad
+      const sinMarcar = document.querySelectorAll('.btn-chk[data-estado="0"]').length;
+      const min = inicioSesion ? Math.round((Date.now() - inicioSesion) / 60000) : 0;
+      const pregunta = '¿Terminar la sesión y guardar ' + filas.length +
+        (filas.length === 1 ? ' serie' : ' series') + (min ? ' (' + min + ' min)' : '') + '?' +
+        (sinMarcar ? '\n\n' + sinMarcar + (sinMarcar === 1
+          ? ' serie sin marcar no se guardará.' : ' series sin marcar no se guardarán.') : '');
+      if (!confirm(pregunta)) return;
+
+      escribirBorrador();
+      const b = document.getElementById('btnGuardar');
+      b.disabled = true;
+      b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Guardando…';
+      google.script.run
+        .withSuccessHandler(function (r) {
+          if (!r || r.ok === false) { falloGuardar({ message: r && r.mensaje }); return; }
+          b.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Guardar';
+          borrarBorrador(diaActivo);
+          cerrarCronometro(true);
+          cacheHist = {};
+          toast(r.repetida
+            ? 'Esta sesión ya estaba guardada ✓'
+            : 'Guardadas ' + r.cantidad + ' series' +
+              (r.duracion ? ' · sesión de ' + r.duracion + ' min' : '') + ' ✓', 3500);
+          renderInicio();
+        })
+        .withFailureHandler(falloGuardar)
+        .guardarSesion({
+          dia: diaActivo,
+          filas: filas,
+          inicio: inicioSesion,
+          fin: Date.now(),
+          token: tokenSesion
+        });
+    }
+
+    function falloGuardar(e) {
+      const b = document.getElementById('btnGuardar');
+      b.disabled = false;
+      b.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Guardar';
+      toast('No llegó la confirmación' + (e && e.message ? ' (' + e.message + ')' : '') +
+        '. Lo anotado sigue en el teléfono: toca Guardar otra vez; no se duplica.', 6500);
+    }
+  </script>
+</body>
+</html>

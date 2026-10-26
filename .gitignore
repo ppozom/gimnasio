@@ -1,0 +1,15 @@
+# clasp: contiene el id del script
+.clasp.json
+.clasprc.json
+
+# Exportaciones de la planilla con datos personales
+*.xlsx
+*.csv
+datos/
+
+# Sistema y editores
+node_modules/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
