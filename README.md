@@ -13,8 +13,11 @@ desde el navegador del teléfono, en el gimnasio.
 - Registro serie por serie, con peso y repeticiones propios en cada serie. Se pueden añadir y quitar series.
 - Tres estados por serie: sin hacer → hecha → hecha pero interrumpida.
 - Precarga de lo hecho en el último guardado de cada ejercicio, aunque haya sido en otro día.
-- Aviso **«sube 2,5–5 kg»** cuando la última vez llegaste al tope del rango en todas las series.
-- Botones por ejercicio: **Técnica** (claves y video), **Nota** (observación del día) e **Historial** (últimas 6 sesiones).
+- Aviso **«sube 2,5–5 kg»** (o «5–10 lb») cuando la última vez llegaste al tope del rango en todas las series.
+- **Superseries:** los ejercicios seguidos con la misma letra en la columna Superserie se muestran juntos; al marcar una serie de uno se pasa al siguiente sin descanso, y el descanso parte al terminar la vuelta.
+- **Kilos o libras** por ejercicio: el botón `kg`/`lb` de cada serie cambia la unidad. Se anota lo que marca la máquina, se precarga igual la próxima vez y se muestra la equivalencia en kilos.
+- Botones por ejercicio: **Técnica** (claves y video), **Comentario** e **Historial** (últimas 6 sesiones).
+- **Comentario vigente:** lo que escribes en un ejercicio se ve en las sesiones siguientes hasta que lo cambies o lo borres. La Observación de Registro guarda solo el día en que cambió.
 - Cambio entre el ejercicio original y sus alternativas, cada una con sus propios datos.
 - **Descanso** editable por ejercicio:
   - parte solo al marcar una serie (se puede desactivar);
@@ -29,13 +32,16 @@ desde el navegador del teléfono, en el gimnasio.
 
 | Hoja | Columnas |
 |---|---|
-| **Rutina** | Día · id · Orden · Ejercicio · Series · Reps objetivo · Nota · Video/Foto (URL) · tiempo_descanso · Técnica 1..5 |
+| **Rutina** | Día · id · Orden · Ejercicio · Series · Reps objetivo · Nota · Video/Foto (URL) · tiempo_descanso · Técnica 1..5 · Superserie |
 | **Alternativas** | id · Ejercicio · Series · Reps objetivo · Nota · Video/Foto (URL) · tiempo_descanso · Técnica 1..5 |
-| **Registro** | Fecha · Hora · Día · Ejercicio · Serie · Peso (kg) · Reps · Descanso (s) · Observación · Estado · id |
+| **Registro** | Fecha · Hora · Día · Ejercicio · Serie · Peso (kg) · Reps · Descanso (s) · Observación · Estado · id · Unidad |
 | **Sesiones** | Fecha · Día · Inicio · Término · Duración (min) · Ejercicios · Series |
+| **Comentarios** | Ejercicio · Comentario · Fecha |
 
 - En **Alternativas** puede haber varias filas por `id`. Si se dejan en blanco Series, Reps o tiempo_descanso, se heredan del ejercicio original.
-- En **Registro**, `Estado` es `completa` o `interrumpida`.
+- En **Rutina**, `Superserie` es una letra (A, B…). Dos o más ejercicios seguidos del mismo día con la misma letra forman una superserie; una letra sola no hace nada.
+- En **Registro**, `Estado` es `completa` o `interrumpida`, y `Unidad` es `kg` o `lb` (vacía = kg; así quedan las series anteriores). `Peso (kg)` guarda el número tal como se anotó, en la unidad de su fila.
+- En **Comentarios** hay una fila por ejercicio, con su nombre exacto. Un comentario vacío significa que lo borraste.
 - `Reps objetivo` y `tiempo_descanso` van con formato de texto plano. `tiempo_descanso` acepta `180` (segundos), `3` (10 o menos se toma como minutos) y `2:30`.
 
 ## Restricciones de la plataforma
@@ -57,6 +63,7 @@ desde el navegador del teléfono, en el gimnasio.
 |---|---|---|
 | `configurarHojas()` | Instalación nueva: crea las hojas con la rutina base | Solo en una planilla vacía |
 | `migrarAlNuevoFormato()` | Pasa del formato antiguo (columna de sustitutos) al actual | Rutina y Alternativas |
+| `migrarSuperseriesLibrasYComentarios()` | Agrega la columna Superserie (con las letras que ya dicen las notas), la cabecera Unidad en Registro y la hoja Comentarios (con la última observación de cada ejercicio) | Rutina (columna nueva) y hoja nueva. Se puede ejecutar dos veces |
 | `migrarEjerciciosNuevos()` | Agrega hip thrust, plancha Copenhague, abducción y alternativas nuevas, con su técnica; completa la técnica que falte | Rutina y Alternativas. Se puede ejecutar dos veces |
 | `revisarDatos()` | Informa incoherencias en el registro de ejecución | No |
 | `repararPesosConFecha()` | Opcional: devuelve a número los pesos que Sheets guardó como fecha | Solo esas celdas de Registro |
@@ -76,6 +83,11 @@ git push -u origin main
 Para sincronizar con Apps Script desde la terminal se puede usar [clasp](https://github.com/google/clasp) con `rootDir` apuntando a `src/`. El archivo `.clasp.json` contiene el id del script y está excluido del repositorio.
 
 ## Historial de cambios
+
+### 2026-10 (2)
+- **Nuevo:** superseries, botón kg/lb por ejercicio y comentario vigente por ejercicio, como en la versión nueva (Next.js + Supabase).
+- **Nuevo:** `migrarSuperseriesLibrasYComentarios()`; `revisarDatos()` también revisa letras de superserie, unidades y comentarios.
+- **Corregido:** una observación como «5-8» ya no se convierte en fecha al guardarse.
 
 ### 2026-10
 - **Corregido:** la alarma de fin de descanso no sonaba. Al llegar a cero, el código pausaba el audio justo antes de los pitidos.

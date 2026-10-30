@@ -77,6 +77,14 @@
       color: var(--texto); box-shadow: 0 0 0 .2rem var(--acentoSuave); }
     .set-row .form-control.heredado { color: var(--sec); }
     .snum { width: 30px; font-weight: 800; font-size: .85rem; color: var(--sec); }
+    .btn-unidad { border: 1px solid var(--linea); background: transparent; color: var(--sec);
+      border-radius: 6px; font-size: .72rem; font-weight: 800; width: 30px; height: 28px; padding: 0; }
+    .btn-unidad.lb { color: var(--acentoFuerte); border-color: var(--acentoBorde); }
+    .en-kilos { font-size: .74rem; color: var(--sec); font-variant-numeric: tabular-nums; margin: .5rem 0 0; }
+
+    .grupo-ss { border: 2px solid var(--acentoBorde); border-radius: 18px; padding: .4rem;
+      display: flex; flex-direction: column; gap: .5rem; }
+    .grupo-tit { font-size: .74rem; font-weight: 800; color: var(--acentoFuerte); margin: .2rem .5rem 0; }
 
     .btn-chk { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--linea);
       background: transparent; color: var(--sec); flex-shrink: 0; }
@@ -306,6 +314,8 @@
     let RUTINA = null;
     let diaActivo = null;
     let marcas = {};
+    let comentarios = null;    // null = la hoja Comentarios no existe: nota por sesión, como antes
+    let pedidoDia = 0;
 
     google.script.run
       .withSuccessHandler(iniciar)
@@ -354,7 +364,8 @@
       cerrarCronometro(false);
       diaActivo = null;
       document.getElementById('barra').classList.add('d-none');
-      let html = '<p class="text-sec small mb-3">Elige el día que vas a entrenar. Para editar ejercicios, modifica la pestaña «Rutina» de la hoja.</p>' +
+      let html = '<p class="text-sec small mb-3">Elige el día que vas a entrenar. Para editar ejercicios, modifica la pestaña «Rutina» de la hoja; ' +
+        'para unir dos en superserie, ponles la misma letra en la columna Superserie.</p>' +
         '<div class="d-flex flex-column gap-2">';
       RUTINA.orden.forEach(function (d, i) {
         html += '<button class="dia-card" onclick="elegirDia(' + i + ')">' +
@@ -368,7 +379,7 @@
         '<p class="text-sec mt-4" style="font-size:.78rem; line-height:1.5;">' +
         '<i class="bi bi-graph-up-arrow me-1 text-acento"></i>' +
         'Regla de progresión: cuando completes el tope de repeticiones en todas las series de un ' +
-        'ejercicio, sube 2,5–5 kg la próxima vez. Termina cada serie con 1–3 repeticiones en reserva.</p>' +
+        'ejercicio, sube 2,5–5 kg la próxima vez (5–10 lb en máquinas en libras). Termina cada serie con 1–3 repeticiones en reserva.</p>' +
         '<div class="diag" id="diag"></div>';
       document.getElementById('vista').innerHTML = html;
       pintarDiagnostico();
@@ -379,10 +390,18 @@
       diaActivo = RUTINA.orden[i];
       document.getElementById('vista').innerHTML =
         '<div class="text-sec text-center py-5"><div class="spinner-border spinner-border-sm me-2"></div>Cargando tus últimas marcas…</div>';
+      // Marcas y comentarios se piden a la vez; se dibuja cuando llegan los dos
+      const pedido = ++pedidoDia;
+      let faltan = 2;
+      const listo = function () { if (--faltan === 0 && pedido === pedidoDia && diaActivo) renderDia(); };
       google.script.run
-        .withSuccessHandler(function (m) { marcas = m || {}; renderDia(); })
-        .withFailureHandler(function () { marcas = {}; renderDia(); })
+        .withSuccessHandler(function (m) { marcas = m || {}; listo(); })
+        .withFailureHandler(function () { marcas = {}; listo(); })
         .obtenerUltimasMarcas(diaActivo);
+      google.script.run
+        .withSuccessHandler(function (c) { comentarios = c || null; listo(); })
+        .withFailureHandler(function () { comentarios = null; listo(); })
+        .obtenerComentarios();
     }
 
     // ——— Día de entrenamiento ———
@@ -394,11 +413,15 @@
       const fueParcial = !!(ph && ph.estado === 'interrumpida');
       const claseS = fueParcial ? 'snum previa-parcial' : 'snum';
       const tituloS = fueParcial ? ' title="La última vez interrumpiste esta serie"' : '';
+      const u = unidades[e] || 'kg';
       return '<div class="set-row d-flex align-items-center gap-2">' +
         '<span class="' + claseS + '"' + tituloS + '>S' + n + '</span>' +
-        '<input class="form-control form-control-sm peso' + cPeso + '" style="width:86px" type="number" step="0.5" inputmode="decimal" placeholder="kg"' + vPeso + ' oninput="this.classList.remove(\'heredado\'); guardarBorrador()" id="p-' + e + '-' + n + '">' +
-        '<span class="text-sec" style="font-size:.75rem">kg ×</span>' +
-        '<input class="form-control form-control-sm reps' + cReps + '" style="width:74px" inputmode="numeric" placeholder="reps"' + vReps + ' oninput="this.classList.remove(\'heredado\'); guardarBorrador()" id="r-' + e + '-' + n + '">' +
+        '<input class="form-control form-control-sm peso' + cPeso + '" style="width:80px" type="number" step="0.5" inputmode="decimal" placeholder="' + u + '"' + vPeso + ' oninput="this.classList.remove(\'heredado\'); pintarKilos(' + e + '); guardarBorrador()" id="p-' + e + '-' + n + '">' +
+        '<span class="d-inline-flex align-items-center" style="gap:.25rem">' +
+        '<button class="btn-unidad' + (u === 'lb' ? ' lb' : '') + '" onclick="cambiarUnidad(' + e + ')" ' +
+        'title="Toca para cambiar entre kilos y libras" aria-label="' + etiquetaUnidad(u) + '">' + u + '</button>' +
+        '<span class="text-sec" style="font-size:.75rem">×</span></span>' +
+        '<input class="form-control form-control-sm reps' + cReps + '" style="width:70px" inputmode="numeric" placeholder="reps"' + vReps + ' oninput="this.classList.remove(\'heredado\'); guardarBorrador()" id="r-' + e + '-' + n + '">' +
         '<button class="btn-chk ms-auto" id="c-' + e + '-' + n + '" onclick="marcar(this)" ' +
         'data-estado="0" aria-label="Marcar serie ' + n + '" title="Toca: hecha → interrumpida → sin hacer">' +
         '<i class="bi bi-check-lg"></i></button></div>';
@@ -420,6 +443,63 @@
         '<button class="btn-timer" id="t-' + e + '" onclick="alternarTimer(' + e + ')" ' +
         'aria-label="Iniciar temporizador de descanso"><i class="bi bi-play-fill"></i></button>' +
         '</span>';
+    }
+
+    // ——— Unidad del peso: kg o lb, tal como marca la máquina ———
+    // Se anota en la unidad de la máquina y se precarga igual la próxima vez,
+    // así no hay que convertir. Vale para todas las series del ejercicio.
+    let unidades = [];
+    const KG_POR_LB = 0.45359237;
+
+    function etiquetaUnidad(u) {
+      return 'Peso en ' + (u === 'lb' ? 'libras' : 'kilos') + '. Toca para cambiar';
+    }
+
+    function pasoSubir(u) {
+      return u === 'lb' ? '5–10 lb' : '2,5–5 kg';
+    }
+
+    /** La unidad de la última vez que hiciste esta variante; si no hay, kg. */
+    function unidadInicial(e) {
+      const v = variante(e);
+      const m = v ? marcas[v.nombre] : null;
+      return m && m.sets && m.sets[0] && m.sets[0].unidad === 'lb' ? 'lb' : 'kg';
+    }
+
+    function cambiarUnidad(e) {
+      unidades[e] = unidades[e] === 'lb' ? 'kg' : 'lb';
+      pintarUnidad(e);
+      guardarBorrador();
+      toast(unidades[e] === 'lb' ? 'En libras: anota lo que marca la máquina' : 'En kilos');
+    }
+
+    function pintarUnidad(e) {
+      const card = document.getElementById('ej-' + e);
+      if (!card) return;
+      const u = unidades[e] || 'kg';
+      card.querySelectorAll('.btn-unidad').forEach(function (b) {
+        b.textContent = u;
+        b.classList.toggle('lb', u === 'lb');
+        b.setAttribute('aria-label', etiquetaUnidad(u));
+      });
+      card.querySelectorAll('.peso').forEach(function (i) { i.placeholder = u; });
+      const s = document.getElementById('sub-' + e);
+      if (s) s.textContent = pasoSubir(u);
+      pintarKilos(e);
+    }
+
+    /** "En kilos: 72,6 · 65,8": la equivalencia de lo anotado en libras. */
+    function pintarKilos(e) {
+      const p = document.getElementById('kg-' + e);
+      const card = document.getElementById('ej-' + e);
+      if (!p || !card) return;
+      const pesos = Array.prototype.map.call(card.querySelectorAll('.peso'), function (i) { return i.value.trim(); });
+      if (unidades[e] !== 'lb' || !pesos.some(function (x) { return x; })) { p.classList.add('d-none'); return; }
+      p.textContent = 'En kilos: ' + pesos.map(function (x) {
+        const n = Number(x.replace(',', '.'));
+        return x && n >= 0 ? String(Math.round(n * KG_POR_LB * 10) / 10).replace('.', ',') : '–';
+      }).join(' · ');
+      p.classList.remove('d-none');
     }
 
     /** Lee el descanso de un ejercicio en segundos. */
@@ -899,29 +979,61 @@
       activos[e] = ((activos[e] || 0) + 1) % (ej.alts.length + 1);
       if (timer.e === e) detenerTimer();
       const v = variante(e);
+      unidades[e] = unidadInicial(e);
       const card = document.getElementById('ej-' + e);
       card.setAttribute('data-nombre', v.nombre);
       card.classList.remove('listo');
       card.innerHTML = cardEjercicio(e);
+      pintarKilos(e);
       actualizarConteo();
       guardarBorrador();
       toast(v.nombre);
     }
 
-    // ——— Observaciones de la sesión ———
+    // ——— Comentario del ejercicio ———
+    // Con la hoja Comentarios, lo que escribes queda vigente en las sesiones
+    // siguientes hasta que lo cambies. Sin ella, la nota es solo de la sesión.
+
+    /** Comentario vigente de la variante activa ({texto, fecha}); null si no hay hoja Comentarios. */
+    function comentarioVigente(e) {
+      if (!comentarios) return null;
+      const c = comentarios[variante(e).nombre];
+      return c && c.texto ? c : { texto: '', fecha: '' };
+    }
+
+    /** ¿El texto del cuadro es distinto del comentario vigente? (sin hoja: ¿hay texto?) */
+    function notaCambiada(e) {
+      const t = document.getElementById('nt-' + e);
+      const texto = t ? t.value.trim() : '';
+      const vig = comentarioVigente(e);
+      return vig ? texto !== vig.texto.trim() : texto.length > 0;
+    }
+
     function botonNota(e, previa) {
+      const vig = comentarioVigente(e);
+      const hay = vig ? !!vig.texto : !!previa;
       return '<button class="btn btn-sm btn-tecnica btn-nota" id="bn-' + e + '" ' +
-        'onclick="alternarNota(' + e + ')" aria-expanded="false">' +
-        '<i class="bi bi-pencil-square me-1"></i>Nota' +
-        (previa ? '<span class="punto"></span>' : '') + '</button>';
+        'onclick="alternarNota(' + e + ')" aria-expanded="false"' +
+        (hay ? ' title="Tiene un comentario"' : '') + '>' +
+        '<i class="bi bi-pencil-square me-1"></i>' + (vig ? 'Comentario' : 'Nota') +
+        (hay ? '<span class="punto"></span>' : '') + '</button>';
     }
 
     function panelNota(e, previa) {
-      return '<div class="panel-tec d-none" id="nota-' + e + '">' +
-        (previa ? '<p class="nota-previa">Última vez anotaste: ' + esc(previa) + '</p>' : '') +
+      const vig = comentarioVigente(e);
+      let ayuda;
+      if (!vig) {
+        ayuda = previa ? '<p class="nota-previa">Última vez anotaste: ' + esc(previa) + '</p>' : '';
+      } else if (vig.texto) {
+        ayuda = '<p class="nota-previa">Vigente desde el ' + esc(fechaCorta(vig.fecha)) +
+          '. Si lo cambias, el nuevo queda desde hoy; si lo borras, se quita.</p>';
+      } else {
+        ayuda = '<p class="nota-previa">Lo que escribas se verá en las próximas sesiones, hasta que lo cambies.</p>';
+      }
+      return '<div class="panel-tec d-none" id="nota-' + e + '">' + ayuda +
         '<textarea class="form-control nota-txt" id="nt-' + e + '" rows="2" ' +
         'oninput="marcarNota(' + e + ')" ' +
-        'placeholder="Ej: 12 kg fue mucho, bajar a 10"></textarea></div>';
+        'placeholder="Ej: 12 kg fue mucho, bajar a 10">' + (vig ? esc(vig.texto) : '') + '</textarea></div>';
     }
 
     function alternarNota(e) {
@@ -938,9 +1050,8 @@
     }
 
     function marcarNota(e) {
-      const t = document.getElementById('nt-' + e);
       const b = document.getElementById('bn-' + e);
-      if (t && b) b.classList.toggle('escrita', t.value.trim().length > 0);
+      if (b) b.classList.toggle('escrita', notaCambiada(e));
       guardarBorrador();
     }
 
@@ -1018,12 +1129,12 @@
           const p = x.peso !== '' && x.peso !== undefined ? String(x.peso).replace('.', ',') : '–';
           const rr = x.reps !== '' && x.reps !== undefined ? x.reps : '–';
           return '<span class="hist-set' + (x.estado === 'interrumpida' ? ' parcial' : '') + '">' +
-            esc(p) + '×' + esc(rr) + '</span>';
+            esc(p) + (x.unidad === 'lb' && p !== '–' ? ' lb' : '') + '×' + esc(rr) + '</span>';
         }).join('');
         return '<div class="hist-fila"><span class="hist-fecha">' + esc(fechaCorta(s.fecha)) + '</span>' +
           '<span class="hist-sets">' + sets + '</span></div>' +
           (s.nota ? '<p class="hist-nota">' + esc(s.nota) + '</p>' : '');
-      }).join('') + '<p class="hist-ley">kg × reps · con borde: serie interrumpida</p>';
+      }).join('') + '<p class="hist-ley">kg × reps (salvo que diga lb) · con borde: serie interrumpida</p>';
     }
 
     function alternarHistorial(e) {
@@ -1086,11 +1197,13 @@
         ult = '<p class="text-acento mb-0 mt-2" style="font-size:.78rem">' +
           '<i class="bi bi-clock-history me-1"></i>Precargado de tu sesión del ' + esc(m.fecha) +
           (m.otroDia ? ' (' + esc(m.dia) + ')' : '') +
+          (m.sets[0] && m.sets[0].unidad === 'lb' ? ' · en libras' : '') +
           (parciales ? ' · ' + parciales + (parciales === 1 ? ' serie con pausa' : ' series con pausa') : '') +
           '</p>';
         if (tocaSubir(m, v)) {
           ult += '<p class="chip-subir mb-0 mt-2"><i class="bi bi-arrow-up-circle-fill me-1"></i>' +
-            'Llegaste al tope (' + rangoReps(v.reps).max + ' reps) en todas las series: sube 2,5–5 kg</p>';
+            'Llegaste al tope (' + rangoReps(v.reps).max + ' reps) en todas las series: sube ' +
+            '<span id="sub-' + e + '">' + pasoSubir(unidades[e]) + '</span></p>';
         }
       }
       let sets = '';
@@ -1122,6 +1235,7 @@
         panelNota(e, m && m.nota ? m.nota : '') +
         panelHistorial(e) +
         '<div class="d-flex flex-column gap-2 mt-3" id="sets-' + e + '">' + sets + '</div>' +
+        '<p class="en-kilos d-none" id="kg-' + e + '"></p>' +
         '<div class="d-flex gap-2 mt-2">' +
         '<button class="btn btn-sm btn-addset" onclick="agregarSerie(' + e + ')">' +
         '<i class="bi bi-plus-lg me-1"></i>añadir serie</button>' +
@@ -1168,10 +1282,10 @@
             });
           });
           const nota = card.querySelector('.nota-txt');
-          ejercicios.push({
-            e: e, alt: activos[e] || 0, sets: sets,
-            nota: nota ? nota.value : '', desc: descansoSegundos(e)
-          });
+          const x = { e: e, alt: activos[e] || 0, sets: sets, desc: descansoSegundos(e), u: unidades[e] || 'kg' };
+          // Solo se guarda el comentario si cambió (nc = nota cambiada); vacío también cuenta
+          if (nota && notaCambiada(e)) { x.nota = nota.value; x.nc = 1; }
+          ejercicios.push(x);
         });
         const todos = leerBorradores();
         todos[diaActivo] = {
@@ -1195,7 +1309,7 @@
       if (!b || !b.ejercicios) return null;
       if ((Date.now() - (b.ts || 0)) > HORAS_BORRADOR * 3600 * 1000) return null;
       const algo = b.ejercicios.some(function (x) {
-        return (x.nota && x.nota.trim()) || (x.alt || 0) !== 0 ||
+        return x.nc || (x.nota && x.nota.trim()) || (x.alt || 0) !== 0 ||
           (x.sets || []).some(function (st) {
             return (st.s && st.s !== '0') || (st.p || '').trim() || (st.r || '').trim();
           });
@@ -1232,12 +1346,13 @@
           if (st.r !== undefined) { ir.value = st.r; if (st.r) ir.classList.remove('heredado'); }
           pintarChk(fila.querySelector('.btn-chk'), Number(st.s || 0) || 0);
         });
-        // Nota y descanso
+        // Unidad, comentario y descanso (los borradores anteriores no traen u ni nc)
+        if (x.u === 'kg' || x.u === 'lb') { unidades[e] = x.u; pintarUnidad(e); }
         const nt = card.querySelector('.nota-txt');
-        if (nt && x.nota) {
-          nt.value = x.nota;
+        if (nt && (x.nc || (x.nota && x.nota.trim()))) {
+          nt.value = x.nota || '';
           const bn = document.getElementById('bn-' + e);
-          if (bn) bn.classList.add('escrita');
+          if (bn) bn.classList.toggle('escrita', notaCambiada(e));
         }
         if (x.desc > 0) {
           const cm = document.getElementById('dm-' + e);
@@ -1269,6 +1384,8 @@
           if (x.e !== undefined && x.alt) activos[x.e] = x.alt;
         });
       }
+      unidades = lista.map(function (ej, e) { return unidadInicial(e); });
+      GRUPOS = gruposSuperserie(lista);
 
       let html = '<button class="btn btn-link btn-volver text-decoration-none ps-0 mb-1" onclick="renderInicio()">' +
         '<i class="bi bi-chevron-left"></i> Días</button>' +
@@ -1284,9 +1401,17 @@
           '<a href="javascript:void(0)" onclick="descartarBorrador()">empezar de cero</a></p>' : '') +
         '<div class="d-flex flex-column gap-3">';
 
-      lista.forEach(function (ej, e) {
-        html += '<div class="card-ej p-3" id="ej-' + e + '" data-nombre="' +
-          esc(variante(e).nombre) + '">' + cardEjercicio(e) + '</div>';
+      GRUPOS.forEach(function (g) {
+        if (g.letra) {
+          html += '<div class="grupo-ss"><p class="grupo-tit"><i class="bi bi-link-45deg me-1"></i>Superserie ' + esc(g.letra) +
+            ': alterna ' + (g.items.length === 2 ? 'los dos ejercicios' : 'los ' + g.items.length + ' ejercicios') +
+            ' y descansa al terminar cada vuelta</p>';
+        }
+        g.items.forEach(function (e) {
+          html += '<div class="card-ej p-3" id="ej-' + e + '" data-nombre="' +
+            esc(variante(e).nombre) + '">' + cardEjercicio(e) + '</div>';
+        });
+        if (g.letra) html += '</div>';
       });
 
       html += '</div>';
@@ -1299,8 +1424,39 @@
         if (brr.token) { tokenSesion = brr.token; persistirSesion(); }
         aplicarBorrador(brr);
       }
+      lista.forEach(function (ej, e) { pintarKilos(e); });
       actualizarConteo();
       window.scrollTo(0, 0);
+    }
+
+    // ——— Superseries ———
+    // Ejercicios seguidos con la misma letra en la columna Superserie se hacen
+    // alternados (A1, A2, A1, A2…) y el descanso va al terminar cada vuelta.
+    let GRUPOS = [];
+
+    /** Grupos de índices consecutivos con la misma letra. Una letra sola no es superserie. */
+    function gruposSuperserie(lista) {
+      const grupos = [];
+      lista.forEach(function (ej, e) {
+        const u = grupos[grupos.length - 1];
+        if (ej.superserie && u && u.letra === ej.superserie) u.items.push(e);
+        else grupos.push({ letra: ej.superserie || '', items: [e] });
+      });
+      return grupos.map(function (g) { return g.items.length > 1 ? g : { letra: '', items: g.items }; });
+    }
+
+    /**
+     * Tras marcar una serie de e: el ejercicio que sigue en su superserie, o null
+     * si toca descansar (e es el último de la vuelta, o los que siguen ya terminaron).
+     */
+    function siguienteEnSuperserie(e) {
+      const g = GRUPOS.filter(function (x) { return x.items.indexOf(e) > -1; })[0];
+      if (!g || !g.letra) return null;
+      const despues = g.items.slice(g.items.indexOf(e) + 1);
+      for (let i = 0; i < despues.length; i++) {
+        if (document.querySelector('#ej-' + despues[i] + ' .btn-chk[data-estado="0"]')) return despues[i];
+      }
+      return null;
     }
 
     function horaDe(ts) {
@@ -1315,6 +1471,7 @@
       const n = cont.querySelectorAll('.set-row').length + 1;
       cont.insertAdjacentHTML('beforeend', filaSet(e, n, null));
       refrescarEstadoTarjeta(e);
+      pintarKilos(e);
       guardarBorrador();
     }
 
@@ -1331,6 +1488,7 @@
       if (timer.e === e) detenerTimer();
       ultima.remove();
       refrescarEstadoTarjeta(e);
+      pintarKilos(e);
       actualizarConteo();
       guardarBorrador();
     }
@@ -1369,6 +1527,13 @@
 
       if (est === 1) {
         ocultarFin();
+        const sig = siguienteEnSuperserie(e);
+        if (sig !== null) {
+          // En superserie se pasa al siguiente sin descanso
+          if (timer.e !== null) detenerTimer();
+          toast('Superserie ' + EJ_DIA[e].superserie + ': sigue con ' + variante(sig).nombre, 2500);
+          return;
+        }
         // Descanso automático, salvo que ya no quede ninguna serie por hacer
         const quedan = document.querySelectorAll('.btn-chk[data-estado="0"]').length;
         if (autoDescanso && quedan > 0) iniciarDescanso(e, n);
@@ -1386,13 +1551,20 @@
     // ——— Guardar sesión: una fila por serie ———
     function guardar() {
       const filas = [];
+      const cambios = [];        // comentarios que cambiaron en esta sesión
       document.querySelectorAll('.card-ej').forEach(function (card) {
         const nombre = card.getAttribute('data-nombre');
         const e = Number(card.id.replace('ej-', ''));
         const idEj = (EJ_DIA[e] && EJ_DIA[e].id) || '';
         const descanso = descansoSegundos(e) || '';
         const campoNota = card.querySelector('.nota-txt');
-        const obs = campoNota ? campoNota.value.trim() : '';
+        const texto = campoNota ? campoNota.value.trim() : '';
+        // Con comentario vigente, la Observación de Registro guarda solo lo que cambió
+        let obs = texto;
+        if (comentarios) {
+          obs = '';
+          if (notaCambiada(e)) { cambios.push({ ejercicio: nombre, texto: texto }); obs = texto; }
+        }
         card.querySelectorAll('.set-row').forEach(function (fila, idx) {
           const peso = fila.querySelector('.peso').value.trim();
           const reps = fila.querySelector('.reps').value.trim();
@@ -1400,7 +1572,7 @@
           if (est !== '0') {
             filas.push({
               id: idEj, ejercicio: nombre, serie: idx + 1, peso: peso, reps: reps,
-              descanso: descanso, obs: obs,
+              descanso: descanso, obs: obs, unidad: unidades[e] || 'kg',
               estado: est === '2' ? 'interrumpida' : 'completa'
             });
           }
@@ -1414,7 +1586,10 @@
       const pregunta = '¿Terminar la sesión y guardar ' + filas.length +
         (filas.length === 1 ? ' serie' : ' series') + (min ? ' (' + min + ' min)' : '') + '?' +
         (sinMarcar ? '\n\n' + sinMarcar + (sinMarcar === 1
-          ? ' serie sin marcar no se guardará.' : ' series sin marcar no se guardarán.') : '');
+          ? ' serie sin marcar no se guardará.' : ' series sin marcar no se guardarán.') : '') +
+        (cambios.length ? '\n\nComentario actualizado: ' + cambios.map(function (c) {
+          return c.ejercicio + (c.texto ? '' : ' (se borra)');
+        }).join(', ') + '.' : '');
       if (!confirm(pregunta)) return;
 
       escribirBorrador();
@@ -1431,13 +1606,15 @@
           toast(r.repetida
             ? 'Esta sesión ya estaba guardada ✓'
             : 'Guardadas ' + r.cantidad + ' series' +
-              (r.duracion ? ' · sesión de ' + r.duracion + ' min' : '') + ' ✓', 3500);
+              (r.duracion ? ' · sesión de ' + r.duracion + ' min' : '') +
+              (r.comentarios ? ' · ' + r.comentarios + (r.comentarios === 1 ? ' comentario' : ' comentarios') : '') + ' ✓', 3500);
           renderInicio();
         })
         .withFailureHandler(falloGuardar)
         .guardarSesion({
           dia: diaActivo,
           filas: filas,
+          comentarios: cambios,
           inicio: inicioSesion,
           fin: Date.now(),
           token: tokenSesion

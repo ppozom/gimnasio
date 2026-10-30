@@ -3,18 +3,32 @@
  *
  * ── Hojas ────────────────────────────────────────────────────────────────────
  * Rutina       Día | id | Orden | Ejercicio | Series | Reps objetivo | Nota |
- *              Video/Foto (URL) | tiempo_descanso | Técnica 1..5
+ *              Video/Foto (URL) | tiempo_descanso | Técnica 1..5 | Superserie
+ *              Superserie: la misma letra (A, B…) en ejercicios seguidos del
+ *              día los une; el descanso va después del último del grupo.
  * Alternativas id | Ejercicio | Series | Reps objetivo | Nota |
  *              Video/Foto (URL) | tiempo_descanso | Técnica 1..5
  *              Varias filas por id. Series, Reps y tiempo_descanso vacíos
  *              heredan el valor del ejercicio original.
  * Registro     Fecha | Hora | Día | Ejercicio | Serie | Peso (kg) | Reps |
- *              Descanso (s) | Observación | Estado | id
+ *              Descanso (s) | Observación | Estado | id | Unidad
+ *              Unidad: kg o lb, tal como marca la máquina. Vacía = kg.
  * Sesiones     Fecha | Día | Inicio | Término | Duración (min) | Ejercicios | Series
+ * Comentarios  Ejercicio | Comentario | Fecha
+ *              Comentario vigente de cada ejercicio: se muestra en cada sesión
+ *              hasta que lo cambies. Vacío = lo borraste.
  *
  * ── Instalación ──────────────────────────────────────────────────────────────
  * Nueva:     ejecuta configurarHojas() una vez.
  * Existente: ejecuta migrarAlNuevoFormato() una vez (formato antiguo → nuevo).
+ *
+ * ── Actualización de octubre 2026 (2) ────────────────────────────────────────
+ * migrarSuperseriesLibrasYComentarios()  agrega la columna Superserie en Rutina
+ *                              (con las letras que ya dicen las notas), la
+ *                              columna Unidad en Registro y la hoja Comentarios
+ *                              (con la última observación de cada ejercicio).
+ *                              No cambia ninguna fila de Registro ni Sesiones.
+ *                              Segura de ejecutar dos veces.
  *
  * ── Actualización de octubre 2026 ────────────────────────────────────────────
  * 1. migrarEjerciciosNuevos()  agrega hip thrust, plancha Copenhague, abducción
@@ -30,26 +44,29 @@ const HOJA_RUTINA = 'Rutina';
 const HOJA_ALTERNATIVAS = 'Alternativas';
 const HOJA_REGISTRO = 'Registro';
 const HOJA_SESIONES = 'Sesiones';
+const HOJA_COMENTARIOS = 'Comentarios';
 
 const DESCANSO_DEFECTO = 120;   // segundos
-const COLS_RUTINA = 14;
+const COLS_RUTINA = 15;
 const COLS_ALT = 12;
-const COLS_REGISTRO = 11;
+const COLS_REGISTRO = 12;
 const MAX_GUARDADOS_RECORDADOS = 40;
 
 const CAB_RUTINA = ['Día', 'id', 'Orden', 'Ejercicio', 'Series', 'Reps objetivo',
   'Nota', 'Video/Foto (URL)', 'tiempo_descanso',
-  'Técnica 1', 'Técnica 2', 'Técnica 3', 'Técnica 4', 'Técnica 5'];
+  'Técnica 1', 'Técnica 2', 'Técnica 3', 'Técnica 4', 'Técnica 5', 'Superserie'];
 
 const CAB_ALT = ['id', 'Ejercicio', 'Series', 'Reps objetivo', 'Nota',
   'Video/Foto (URL)', 'tiempo_descanso',
   'Técnica 1', 'Técnica 2', 'Técnica 3', 'Técnica 4', 'Técnica 5'];
 
 const CAB_REGISTRO = ['Fecha', 'Hora', 'Día', 'Ejercicio', 'Serie', 'Peso (kg)',
-  'Reps', 'Descanso (s)', 'Observación', 'Estado', 'id'];
+  'Reps', 'Descanso (s)', 'Observación', 'Estado', 'id', 'Unidad'];
 
 const CAB_SESIONES = ['Fecha', 'Día', 'Inicio', 'Término', 'Duración (min)',
   'Ejercicios', 'Series'];
+
+const CAB_COMENTARIOS = ['Ejercicio', 'Comentario', 'Fecha'];
 
 
 function doGet() {
@@ -239,21 +256,39 @@ function formatoTexto_(hoja, columnas, filas) {
   });
 }
 
-/** Registro creado antes de la columna id: le pone la cabecera que falta. */
-function asegurarCabeceraId_(h) {
+/**
+ * Registro creado antes de las columnas id o Unidad: pone las cabeceras que
+ * falten. No toca las filas. Devuelve las cabeceras agregadas.
+ */
+function asegurarCabecerasRegistro_(h) {
   if (h.getMaxColumns() < COLS_REGISTRO) {
     h.insertColumnsAfter(h.getMaxColumns(), COLS_REGISTRO - h.getMaxColumns());
   }
-  const c = h.getRange(1, COLS_REGISTRO);
-  if (String(c.getValue() || '').trim() === '') {
-    c.setValue(CAB_REGISTRO[COLS_REGISTRO - 1]).setFontWeight('bold');
-    return true;
-  }
-  return false;
+  const r = h.getRange(1, 1, 1, COLS_REGISTRO);
+  const cab = r.getValues()[0];
+  const agregadas = [];
+  cab.forEach(function (c, i) {
+    if (String(c || '').trim() === '') {
+      h.getRange(1, i + 1).setValue(CAB_REGISTRO[i]).setFontWeight('bold');
+      agregadas.push(CAB_REGISTRO[i] + ' (columna ' + String.fromCharCode(65 + i) + ')');
+    }
+  });
+  return agregadas;
 }
 
 function textoCelda_(x) {
   return String(x === undefined || x === null ? '' : x).trim();
+}
+
+/** Letra de superserie (A–Z) o '' si la celda está vacía o no es una letra. */
+function letraSuperserie_(v) {
+  const t = textoCelda_(v).toUpperCase();
+  return /^[A-Z]$/.test(t) ? t : '';
+}
+
+/** Unidad de una serie: 'lb' si así se anotó; cualquier otra cosa (o vacío) es kg. */
+function unidadDe_(v) {
+  return /^(lb|lbs|libras?)$/i.test(textoCelda_(v)) ? 'lb' : 'kg';
 }
 
 /** Filas de Rutina con su número de fila en la hoja. */
@@ -270,7 +305,8 @@ function leerRutina_(hr) {
     out.push({
       fila: i + 2, dia: textoCelda_(f[0]), id: textoCelda_(f[1]), orden: Number(f[2]) || 0,
       nombreCrudo: String(f[3]), nombre: nombre, nota: textoCelda_(f[6]), url: textoCelda_(f[7]),
-      tips: tips.filter(function (x) { return x.length > 0; })
+      tips: tips.filter(function (x) { return x.length > 0; }),
+      superserieCruda: textoCelda_(f[14]), superserie: letraSuperserie_(f[14])
     });
   });
   return out;
@@ -380,6 +416,7 @@ function obtenerRutina() {
       tips: [fila[9], fila[10], fila[11], fila[12], fila[13]]
         .map(function (x) { return String(x === undefined || x === null ? '' : x).trim(); })
         .filter(function (x) { return x.length > 0; }),
+      superserie: letraSuperserie_(fila[14]),
       alts: alts
     });
   });
@@ -432,7 +469,8 @@ function obtenerUltimasMarcas(dia) {
       serie: Number(fila[4]) || 0,
       peso: pesoDeCelda_(fila[5]),
       reps: aTexto(fila[6]),
-      estado: cols >= 10 ? String(fila[9] || '').trim() : ''
+      estado: cols >= 10 ? String(fila[9] || '').trim() : '',
+      unidad: unidadDe_(fila[11])
     });
   }
 
@@ -472,7 +510,8 @@ function obtenerHistorial(ejercicio, max) {
     actual.sets.unshift({
       peso: pesoDeCelda_(fila[5]),
       reps: aTexto(fila[6]),
-      estado: cols >= 10 ? String(fila[9] || '').trim() : ''
+      estado: cols >= 10 ? String(fila[9] || '').trim() : '',
+      unidad: unidadDe_(fila[11])
     });
     const obs = cols >= 9 ? String(fila[8] || '').trim() : '';
     if (obs && !actual.nota) actual.nota = obs;
@@ -492,6 +531,67 @@ function obtenerHistorial(ejercicio, max) {
       return { fecha: s.fecha, dia: s.dia, sets: s.sets, nota: s.nota };
     })
   };
+}
+
+
+/** Filas de Comentarios con su número de fila. Si un ejercicio se repite, vale la última. */
+function leerComentarios_(h) {
+  const n = h.getLastRow() - 1;
+  if (n < 1) return [];
+  const datos = h.getRange(2, 1, n, 2).getValues();
+  const fechas = h.getRange(2, 3, n, 1).getDisplayValues();
+  const out = [];
+  datos.forEach(function (f, i) {
+    const nombre = textoCelda_(f[0]);
+    if (!nombre) return;
+    out.push({ fila: i + 2, nombre: nombre, texto: aTexto(f[1]), fecha: fechas[i][0] });
+  });
+  return out;
+}
+
+/**
+ * Comentario vigente de cada ejercicio: { nombre: { texto, fecha } }.
+ * Devuelve null si la hoja Comentarios no existe todavía (falta ejecutar la
+ * migración): la app sigue como antes, con la nota de la última sesión.
+ */
+function obtenerComentarios() {
+  const h = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_COMENTARIOS);
+  if (!h) return null;
+  const out = {};
+  leerComentarios_(h).forEach(function (c) {
+    if (c.texto) out[c.nombre] = { texto: c.texto, fecha: c.fecha };
+    else delete out[c.nombre];
+  });
+  return out;
+}
+
+/**
+ * Escribe los comentarios que cambiaron en la sesión: reemplaza el del
+ * ejercicio o agrega una fila. Un comentario vacío queda como fila vacía (lo
+ * borraste), para que la migración no lo vuelva a sembrar.
+ */
+function guardarComentarios_(ss, lista, fecha) {
+  const h = ss.getSheetByName(HOJA_COMENTARIOS);
+  if (!h || !lista || !lista.length) return 0;
+  const filaDe = {};
+  leerComentarios_(h).forEach(function (c) { filaDe[c.nombre] = c.fila; });
+  let n = 0;
+  lista.forEach(function (c) {
+    const nombre = textoCelda_(c && c.ejercicio);
+    const texto = textoCelda_(c && c.texto);
+    if (!nombre) return;
+    let fila = filaDe[nombre];
+    if (!fila) {
+      if (!texto) return;              // borrar uno que no existía: nada que hacer
+      fila = h.getLastRow() + 1;
+      filaDe[nombre] = fila;
+    }
+    // Texto plano: así "5-8" o "2:30" no se convierten en fecha u hora
+    h.getRange(fila, 1, 1, 2).setNumberFormat('@');
+    h.getRange(fila, 1, 1, 3).setValues([[nombre, texto, fecha]]);
+    n++;
+  });
+  return n;
 }
 
 
@@ -528,7 +628,9 @@ function recordarGuardado_(clave, resultado) {
 
 /**
  * Guarda la sesión: una fila por serie en Registro y un resumen en Sesiones.
- * datos = { dia, inicio, fin, token, filas:[{id, ejercicio, serie, peso, reps, descanso, obs, estado}] }
+ * datos = { dia, inicio, fin, token,
+ *           filas:[{id, ejercicio, serie, peso, reps, descanso, obs, estado, unidad}],
+ *           comentarios:[{ejercicio, texto}] }   ← solo los que cambiaron
  *
  * Si la respuesta anterior no llegó al teléfono (sin señal) y se vuelve a enviar
  * la misma sesión, no se duplica: se reconoce por el token y su contenido.
@@ -548,7 +650,9 @@ function guardarSesion(datos) {
     const fecha = Utilities.formatDate(ahora, tz, 'yyyy-MM-dd');
     const hora = Utilities.formatDate(ahora, tz, 'HH:mm');
 
-    const contenido = JSON.stringify([datos.dia, datos.filas]);
+    const comentarios = Array.isArray(datos.comentarios) ? datos.comentarios : [];
+    const contenido = JSON.stringify(comentarios.length
+      ? [datos.dia, datos.filas, comentarios] : [datos.dia, datos.filas]);
     const clave = (datos.token ? String(datos.token) : fecha) + '|' + huella_(contenido);
     const previo = leerGuardados_().filter(function (g) { return g.k === clave; })[0];
     if (previo) {
@@ -556,15 +660,21 @@ function guardarSesion(datos) {
     }
 
     const h = hojaOCrear_(ss, HOJA_REGISTRO, CAB_REGISTRO);
-    asegurarCabeceraId_(h);
+    asegurarCabecerasRegistro_(h);
 
     // Peso y reps van como número: así Sheets no convierte "22.5" en una fecha
     const filas = datos.filas.map(function (f) {
       return [fecha, hora, String(datos.dia), String(f.ejercicio), f.serie,
               aNumero_(f.peso), aNumero_(f.reps), f.descanso, String(f.obs || ''),
-              String(f.estado || 'completa'), String(f.id || '')];
+              String(f.estado || 'completa'), String(f.id || ''), unidadDe_(f.unidad)];
     });
-    h.getRange(h.getLastRow() + 1, 1, filas.length, COLS_REGISTRO).setValues(filas);
+    const desde = h.getLastRow() + 1;
+    h.getRange(desde, 9, filas.length, 1).setNumberFormat('@');   // la observación, como texto
+    h.getRange(desde, 1, filas.length, COLS_REGISTRO).setValues(filas);
+
+    let nComentarios = 0;
+    try { nComentarios = guardarComentarios_(ss, comentarios, fecha); }
+    catch (e) { /* las series ya quedaron; el comentario sigue en la Observación */ }
 
     // Resumen de la sesión
     let duracion = '';
@@ -591,6 +701,7 @@ function guardarSesion(datos) {
 
     const resultado = { ok: true, cantidad: filas.length, duracion: duracion };
     recordarGuardado_(clave, resultado);
+    resultado.comentarios = nComentarios;
     return resultado;
   } finally {
     lock.releaseLock();
@@ -608,10 +719,11 @@ function configurarHojas() {
   let creada = false;
   if (!ss.getSheetByName(HOJA_RUTINA)) {
     const hr = hojaOCrear_(ss, HOJA_RUTINA, CAB_RUTINA);
-    const filas = rutinaBase();
+    const filas = rutinaBase().map(function (f) { return f.concat(['']); });   // + Superserie
     formatoTexto_(hr, [6, 9], filas.length);
     hr.getRange(2, 1, filas.length, COLS_RUTINA).setValues(filas);
     hr.autoResizeColumns(1, 4);
+    sembrarSuperseries_(hr);
     creada = true;
   }
   if (!ss.getSheetByName(HOJA_ALTERNATIVAS)) {
@@ -623,6 +735,9 @@ function configurarHojas() {
   }
   hojaOCrear_(ss, HOJA_REGISTRO, CAB_REGISTRO);
   hojaOCrear_(ss, HOJA_SESIONES, CAB_SESIONES);
+  if (!ss.getSheetByName(HOJA_COMENTARIOS)) {
+    formatoTexto_(hojaOCrear_(ss, HOJA_COMENTARIOS, CAB_COMENTARIOS), [1, 2], 200);
+  }
   Logger.log(creada ? 'Hojas creadas con la rutina base.' : 'Las hojas ya existían.');
   if (creada) migrarEjerciciosNuevos();
 }
@@ -637,7 +752,7 @@ function configurarHojas() {
  *  · ubica las columnas por el nombre de su cabecera (tolera los renombres)
  *  · asigna ids a las filas que no lo tengan
  *  · pasa cada sustituto a su propia fila en la hoja Alternativas
- *  · deja la hoja Rutina con las 14 columnas nuevas
+ *  · deja la hoja Rutina con las 15 columnas nuevas
  *  · informa las anomalías que encuentre, sin inventar datos
  * No modifica Registro ni Sesiones. Es segura de ejecutar más de una vez.
  */
@@ -672,6 +787,7 @@ function migrarAlNuevoFormato() {
                          'descanso'], 7);
   const cSust  = buscar(['sustitutos', 'alternativas (separadas por ;)', 'alternativas'], -1);
   const cT1    = buscar(['sustituto_tecnica', 'técnica 1', 'tecnica 1'], -1);
+  const cSs    = buscar(['superserie'], -1);
 
   const n = hr.getLastRow() - 1;
   if (n < 1) { Logger.log('La hoja Rutina está vacía: nada que migrar.'); return; }
@@ -716,7 +832,8 @@ function migrarAlNuevoFormato() {
       dia, id, cOrden >= 0 ? (Number(f[cOrden]) || (i + 1)) : (i + 1),
       nombre, series, reps,
       String(f[cNota] || '').trim(), String(f[cUrl] || '').trim(), descanso,
-      tips[0], tips[1], tips[2], tips[3], tips[4]
+      tips[0], tips[1], tips[2], tips[3], tips[4],
+      cSs >= 0 ? letraSuperserie_(f[cSs]) : ''
     ]);
 
     // Sustitutos → hoja Alternativas, una fila por sustituto
@@ -1011,7 +1128,7 @@ function migrarEjerciciosNuevos() {
     hr.getRange(fila, 9).setNumberFormat('@');
     const id = String(++maxId);
     e.id = id;
-    hr.getRange(fila, 1, 1, COLS_RUTINA).setValues([[e.dia, Number(id), ordenNuevo, e.nombre, e.series,
+    hr.getRange(fila, 1, 1, 14).setValues([[e.dia, Number(id), ordenNuevo, e.nombre, e.series,
       e.reps, e.nota, e.url, e.descanso].concat(filaTips_(e.tips))]);
     hechos.push('Rutina · ' + e.dia + ': + ' + e.nombre + ' (id ' + id + ', orden ' + ordenNuevo + ')' +
                 (corridos.length ? '; se corrió el orden de: ' + corridos.join(', ') : ''));
@@ -1070,9 +1187,148 @@ function migrarEjerciciosNuevos() {
                 (t.nombre !== a.nombre ? ' (tomada de "' + t.nombre + '")' : ''));
   });
 
-  // 4) Registro: solo la cabecera de la columna id, si falta
+  // 4) Registro: solo las cabeceras que falten (id, Unidad)
   const hreg = ss.getSheetByName(HOJA_REGISTRO);
-  if (hreg && asegurarCabeceraId_(hreg)) hechos.push('Registro: se agregó la cabecera "id" en la columna K.');
+  (hreg ? asegurarCabecerasRegistro_(hreg) : []).forEach(function (c) {
+    hechos.push('Registro: se agregó la cabecera ' + c + '.');
+  });
+
+  Logger.log(hechos.length ? 'Cambios:\n- ' + hechos.join('\n- ') : 'Nada que hacer: todo ya estaba aplicado.');
+  if (avisos.length) Logger.log('\nRevisa:\n- ' + avisos.join('\n- '));
+  return { cambios: hechos, avisos: avisos };
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Actualización de octubre 2026 (2): superseries, libras y comentarios
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Posición en que la app muestra un ejercicio del día: su Orden o, si falta, su fila. */
+function ordenApp_(r) {
+  return r.orden || (r.fila - 1);
+}
+
+/**
+ * Pone la letra de superserie a los ejercicios cuya Nota empieza con
+ * "Superserie A", "Superserie B"…, solo en celdas vacías. Devuelve lo que hizo.
+ */
+function sembrarSuperseries_(hr) {
+  const hechos = [];
+  leerRutina_(hr).forEach(function (r) {
+    if (r.superserieCruda) return;
+    const m = r.nota.match(/^\s*superserie\s+([a-z])\b/i);
+    if (!m) return;
+    const letra = m[1].toUpperCase();
+    hr.getRange(r.fila, COLS_RUTINA).setValue(letra);
+    hechos.push('Rutina fila ' + r.fila + ' · ' + r.dia + ' · ' + r.nombre + ': superserie ' + letra + '.');
+  });
+  return hechos;
+}
+
+/** Letras de superserie que la app no puede usar como se esperaría: inválidas, solas o separadas. */
+function avisosSuperseries_(rut) {
+  const out = [];
+  const porDia = {};
+  rut.forEach(function (r) { (porDia[r.dia] = porDia[r.dia] || []).push(r); });
+  Object.keys(porDia).forEach(function (dia) {
+    const lista = porDia[dia].slice().sort(function (a, b) { return ordenApp_(a) - ordenApp_(b); });
+    const grupos = [];
+    lista.forEach(function (r) {
+      if (r.superserieCruda && !r.superserie) {
+        out.push(dia + ' · ' + r.nombre + ': Superserie "' + r.superserieCruda + '" no es una letra (A–Z); se ignora.');
+      }
+      const u = grupos[grupos.length - 1];
+      if (r.superserie && u && u.letra === r.superserie) u.n++;
+      else grupos.push({ letra: r.superserie, n: 1, nombre: r.nombre });
+    });
+    const vistas = {};
+    grupos.forEach(function (g) {
+      if (!g.letra) return;
+      if (g.n === 1) {
+        out.push(dia + ' · ' + g.nombre + ': tiene la letra ' + g.letra + ' pero el ejercicio de al lado no; ' +
+                 'solo, no forma superserie.');
+      } else if (vistas[g.letra]) {
+        out.push(dia + ': la letra ' + g.letra + ' está en dos grupos separados; la app los trata como dos superseries.');
+      }
+      vistas[g.letra] = true;
+    });
+  });
+  return out;
+}
+
+/**
+ * Prepara la planilla para superseries, libras y comentarios vigentes:
+ *  1. Rutina: agrega la columna O «Superserie» y, solo esa primera vez, pone la
+ *     letra a los ejercicios cuya Nota empieza con "Superserie A", "Superserie B"…
+ *  2. Registro: agrega la cabecera L «Unidad». Las series ya guardadas no se
+ *     tocan: sin unidad se leen como kg.
+ *  3. Comentarios: crea la hoja y, para cada ejercicio que todavía no tenga
+ *     fila, siembra la última Observación que escribiste, con su fecha.
+ * No cambia ninguna fila de Registro ni Sesiones. Segura de ejecutar dos veces.
+ */
+function migrarSuperseriesLibrasYComentarios() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const hechos = [];
+  const avisos = [];
+
+  // 1) Rutina: columna Superserie
+  const hr = ss.getSheetByName(HOJA_RUTINA);
+  if (!hr) throw new Error('No existe la pestaña "Rutina".');
+  if (hr.getMaxColumns() < COLS_RUTINA) {
+    hr.insertColumnsAfter(hr.getMaxColumns(), COLS_RUTINA - hr.getMaxColumns());
+  }
+  const celdaCab = hr.getRange(1, COLS_RUTINA);
+  const cabActual = textoCelda_(celdaCab.getValue());
+  if (!cabActual) {
+    celdaCab.setValue(CAB_RUTINA[COLS_RUTINA - 1]).setFontWeight('bold');
+    hechos.push('Rutina: se agregó la columna O «Superserie».');
+    sembrarSuperseries_(hr).forEach(function (t) { hechos.push(t); });
+  } else if (cabActual.toLowerCase() !== 'superserie') {
+    avisos.push('Rutina: la columna O ya tiene la cabecera "' + cabActual + '" y no la toqué. ' +
+                'La app lee esa columna como Superserie: mueve esos datos y vuelve a ejecutar.');
+  }
+  avisosSuperseries_(leerRutina_(hr)).forEach(function (t) { avisos.push('Rutina · ' + t); });
+
+  // 2) Registro: cabecera Unidad
+  const hreg = ss.getSheetByName(HOJA_REGISTRO);
+  (hreg ? asegurarCabecerasRegistro_(hreg) : []).forEach(function (c) {
+    hechos.push('Registro: se agregó la cabecera ' + c + '. Las series anteriores quedan sin unidad y se leen como kg.');
+  });
+
+  // 3) Comentarios: la hoja y la última observación de cada ejercicio
+  let hc = ss.getSheetByName(HOJA_COMENTARIOS);
+  if (!hc) {
+    hc = hojaOCrear_(ss, HOJA_COMENTARIOS, CAB_COMENTARIOS);
+    formatoTexto_(hc, [1, 2], 200);
+    hechos.push('Se creó la hoja «Comentarios».');
+  }
+  const conFila = {};
+  leerComentarios_(hc).forEach(function (c) { conFila[c.nombre] = true; });
+  const sembrar = [];
+  if (hreg && hreg.getLastRow() > 1) {
+    const n = hreg.getLastRow() - 1;
+    const datos = hreg.getRange(2, 1, n, Math.min(9, hreg.getMaxColumns())).getValues();
+    const fechas = hreg.getRange(2, 1, n, 1).getDisplayValues();
+    const visto = {};
+    for (let i = n - 1; i >= 0; i--) {
+      const ej = textoCelda_(datos[i][3]);
+      const obs = aTexto(datos[i][8]);
+      if (!ej || !obs || visto[ej] || conFila[ej]) continue;
+      visto[ej] = true;
+      sembrar.push([ej, obs, fechas[i][0]]);
+    }
+  }
+  if (sembrar.length) {
+    sembrar.sort(function (a, b) { return a[0] < b[0] ? -1 : 1; });
+    const desde = hc.getLastRow() + 1;
+    hc.getRange(desde, 1, sembrar.length, 2).setNumberFormat('@');
+    hc.getRange(desde, 1, sembrar.length, 3).setValues(sembrar);
+    hc.autoResizeColumns(1, 1);
+    sembrar.forEach(function (s) {
+      const t = s[1].replace(/\s+/g, ' ');
+      hechos.push('Comentarios · ' + s[0] + ' (del ' + s[2] + '): "' + (t.length > 90 ? t.slice(0, 90) + '…' : t) + '"');
+    });
+  }
 
   Logger.log(hechos.length ? 'Cambios:\n- ' + hechos.join('\n- ') : 'Nada que hacer: todo ya estaba aplicado.');
   if (avisos.length) Logger.log('\nRevisa:\n- ' + avisos.join('\n- '));
@@ -1146,6 +1402,7 @@ function revisarDatos() {
   Object.keys(diasPorNombre).forEach(function (k) {
     if (diasPorNombre[k].length > 1) nota('Rutina', 'el mismo ejercicio aparece en: ' + diasPorNombre[k].join(' y ') + '.');
   });
+  avisosSuperseries_(rut).forEach(function (t) { nota('Superseries', t); });
 
   // Alternativas
   const alts = leerAlternativas_(ss.getSheetByName(HOJA_ALTERNATIVAS));
@@ -1184,6 +1441,7 @@ function revisarDatos() {
     const pesosFecha = [];
     const huerfanos = {};
     const estadosRaros = {};
+    const unidadesRaras = {};
     const diasConDatos = {};
     const ejConDatos = {};
     const guardados = [];
@@ -1199,6 +1457,8 @@ function revisarDatos() {
       if (!conocidos[ej]) huerfanos[ej] = (huerfanos[ej] || 0) + 1;
       const est = cols >= 10 ? String(f[9] || '').trim() : '';
       if (est && est !== 'completa' && est !== 'interrumpida') estadosRaros[est] = true;
+      const uni = textoCelda_(f[11]);
+      if (uni && uni.toLowerCase() !== 'kg' && unidadDe_(uni) !== 'lb') unidadesRaras[uni] = true;
 
       const clave = vista[i][0] + ' ' + vista[i][1] + ' ' + dia;
       let g = guardados[guardados.length - 1];
@@ -1222,6 +1482,9 @@ function revisarDatos() {
       nota('Registro', '"' + ej + '" tiene ' + huerfanos[ej] + ' series registradas pero no está en Rutina ni en Alternativas: no se precarga.');
     });
     Object.keys(estadosRaros).forEach(function (e) { nota('Registro', 'Estado desconocido: "' + e + '".'); });
+    Object.keys(unidadesRaras).forEach(function (u) {
+      nota('Registro', 'Unidad desconocida: "' + u + '". La app solo distingue kg y lb; esas series se leen como kg.');
+    });
 
     // Guardados repetidos del mismo día
     guardados.forEach(function (g) {
@@ -1268,6 +1531,19 @@ function revisarDatos() {
       if (!diasConDatos[r.dia]) return;
       const usado = ejConDatos[r.nombre] || alts.some(function (a) { return a.id === r.id && ejConDatos[a.nombre]; });
       if (!usado) nota('Uso', r.dia + ' · ' + r.nombre + ': sin registros todavía.');
+    });
+  }
+
+  // Comentarios
+  const hc = ss.getSheetByName(HOJA_COMENTARIOS);
+  if (hc) {
+    const filaCom = {};
+    leerComentarios_(hc).forEach(function (c) {
+      if (filaCom[c.nombre]) nota('Comentarios', c.nombre + ': está en las filas ' + filaCom[c.nombre] + ' y ' + c.fila +
+                                  '; la app muestra el de la fila ' + c.fila + '.');
+      filaCom[c.nombre] = c.fila;
+      if (c.texto && !conocidos[c.nombre]) nota('Comentarios', 'fila ' + c.fila + ' · "' + c.nombre +
+          '" no está en Rutina ni en Alternativas con ese nombre exacto: su comentario no se muestra.');
     });
   }
 
